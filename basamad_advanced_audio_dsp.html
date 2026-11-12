@@ -1,0 +1,2082 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Basamad — Independent Audio DSP Engineering</title>
+  <meta name="description" content="Independent audio DSP engineering consultancy focused on adaptive signal processing, microphone arrays, acoustic echo cancellation and intelligent voice systems." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: {
+              950: '#060F1E',
+              900: '#0A192F',
+              800: '#112240',
+              700: '#1D3557',
+            },
+            cyan: {
+              400: '#38BDF8',
+              300: '#00E5FF',
+            },
+            slate: {
+              300: '#CCD6F6',
+              400: '#8892B0',
+              500: '#64748B',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom precision sliders & technical styling */
+    body {
+      background-color: #0A192F;
+      color: #F8FAFC;
+      overflow-x: hidden;
+    }
+    .grid-bg {
+      background-image: 
+        linear-gradient(to right, rgba(56, 189, 248, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+      background-size: 36px 36px;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: #1D3557;
+      height: 4px;
+      border-radius: 2px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #00E5FF;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
+      transition: transform 0.15s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+    .tech-card {
+      background: linear-gradient(145deg, rgba(17, 34, 64, 0.92), rgba(10, 25, 47, 0.96));
+      border: 1px solid rgba(56, 189, 248, 0.14);
+      transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .tech-card:hover {
+      border-color: rgba(0, 229, 255, 0.4);
+      box-shadow: 0 10px 30px -15px rgba(2, 12, 27, 0.85);
+    }
+    .nav-blur {
+      background: rgba(10, 25, 47, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body class="font-sans antialiased selection:bg-cyan-400/20 selection:text-cyan-300">
+
+  <!-- ===================================================================== -->
+  <!-- FIXED TOP NAVIGATION                                                  -->
+  <!-- ===================================================================== -->
+  <header class="fixed top-0 inset-x-0 z-50 nav-blur border-b border-cyan-400/15">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Brand Logo -->
+      <a href="#home" class="flex items-center gap-3 group">
+        <div class="w-9 h-9 rounded-lg bg-navy-800 border border-cyan-400/30 flex items-center justify-center group-hover:border-cyan-300 transition-colors">
+          <!-- Stylized Acoustic Wave & Array SVG Icon -->
+          <svg class="w-5 h-5 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <line x1="3" y1="12" x2="3" y2="12" stroke-linecap="round" stroke-width="2.4" />
+            <line x1="7" y1="8" x2="7" y2="16" stroke-linecap="round" />
+            <line x1="11" y1="4" x2="11" y2="20" stroke-linecap="round" />
+            <line x1="15" y1="7" x2="15" y2="17" stroke-linecap="round" />
+            <line x1="19" y1="10" x2="19" y2="14" stroke-linecap="round" />
+            <circle cx="22" cy="12" r="1" fill="currentColor" />
+          </svg>
+        </div>
+        <div>
+          <span class="font-bold tracking-wider text-white text-base sm:text-lg">BASAMAD</span>
+          <span class="hidden sm:inline-block ml-2 text-[11px] font-mono text-cyan-400/90 tracking-widest uppercase border-l border-slate-400/30 pl-2">Audio DSP</span>
+        </div>
+      </a>
+
+      <!-- Desktop Nav Links -->
+      <nav class="hidden lg:flex items-center gap-6 text-xs font-mono">
+        <a href="#home" class="text-slate-300 hover:text-cyan-300 transition-colors"><span class="text-cyan-400">01</span> Home</a>
+        <a href="#services" class="text-slate-300 hover:text-cyan-300 transition-colors"><span class="text-cyan-400">02</span> Services</a>
+        <a href="#solutions" class="text-slate-300 hover:text-cyan-300 transition-colors"><span class="text-cyan-400">03</span> Technical Solutions</a>
+        <a href="#lab" class="text-slate-300 hover:text-cyan-300 transition-colors flex items-center gap-1.5">
+          <span class="text-cyan-400">04</span> Interactive Lab
+          <span class="w-1.5 h-1.5 rounded-full bg-cyan-300 animate-pulse"></span>
+        </a>
+        <a href="#dsp-modules" class="text-slate-300 hover:text-cyan-300 transition-colors"><span class="text-cyan-400">05</span> DSP Modules</a>
+        <a href="#research" class="text-slate-300 hover:text-cyan-300 transition-colors"><span class="text-cyan-400">06</span> Research</a>
+        <a href="#about" class="text-slate-300 hover:text-cyan-300 transition-colors"><span class="text-cyan-400">07</span> About &amp; Contact</a>
+      </nav>
+
+      <!-- Mobile Menu Button -->
+      <button id="mobileMenuBtn" aria-label="Toggle Menu" class="lg:hidden p-2 rounded-lg border border-cyan-400/20 text-slate-300 hover:text-cyan-300 hover:border-cyan-300">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mobile Dropdown Navigation -->
+    <div id="mobileMenu" class="hidden lg:hidden bg-navy-900 border-b border-cyan-400/20 px-6 py-4 space-y-3 font-mono text-xs">
+      <a href="#home" class="block py-1.5 text-slate-300 hover:text-cyan-300"><span class="text-cyan-400 mr-2">01</span>Home</a>
+      <a href="#services" class="block py-1.5 text-slate-300 hover:text-cyan-300"><span class="text-cyan-400 mr-2">02</span>Services</a>
+      <a href="#solutions" class="block py-1.5 text-slate-300 hover:text-cyan-300"><span class="text-cyan-400 mr-2">03</span>Technical Solutions</a>
+      <a href="#lab" class="block py-1.5 text-cyan-300 font-semibold"><span class="text-cyan-400 mr-2">04</span>Interactive Audio Laboratory</a>
+      <a href="#dsp-modules" class="block py-1.5 text-slate-300 hover:text-cyan-300"><span class="text-cyan-400 mr-2">05</span>Interactive DSP Modules</a>
+      <a href="#research" class="block py-1.5 text-slate-300 hover:text-cyan-300"><span class="text-cyan-400 mr-2">06</span>Technology &amp; Research</a>
+      <a href="#about" class="block py-1.5 text-slate-300 hover:text-cyan-300"><span class="text-cyan-400 mr-2">07</span>About &amp; Contact</a>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- SECTION 01 — HOME (HERO)                                              -->
+  <!-- ===================================================================== -->
+  <section id="home" class="relative pt-28 pb-20 lg:pt-36 lg:pb-28 grid-bg border-b border-cyan-400/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <!-- Left Copy -->
+        <div class="lg:col-span-7 space-y-6">
+          <div class="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-navy-800 border border-cyan-400/30">
+            <span class="w-2 h-2 rounded-full bg-cyan-300"></span>
+            <span class="font-mono text-[11px] sm:text-xs tracking-widest text-cyan-300 uppercase">
+              Independent Audio Technology Consultancy
+            </span>
+          </div>
+
+          <h1 class="text-3xl sm:text-5xl lg:text-[52px] font-bold tracking-tight text-white leading-[1.12]">
+            Basamad: <span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-cyan-300">Audio DSP Engineering</span> &amp; Intelligent Voice Systems
+          </h1>
+
+          <p class="text-base sm:text-lg text-slate-300 max-w-2xl leading-relaxed font-normal">
+            Independent engineering for audio capture, adaptive signal processing, echo control and speech enhancement — from algorithm concepts to practical prototypes.
+          </p>
+
+          <!-- Key Technical Pillars Strip -->
+          <div class="grid grid-cols-3 gap-3 pt-2 max-w-xl font-mono text-xs">
+            <div class="bg-navy-800/70 border border-cyan-400/15 rounded-lg p-3">
+              <div class="text-cyan-300 font-semibold">ARRAY DSP</div>
+              <div class="text-slate-400 text-[11px] mt-0.5">MVDR &bull; GSC &bull; DOA</div>
+            </div>
+            <div class="bg-navy-800/70 border border-cyan-400/15 rounded-lg p-3">
+              <div class="text-cyan-300 font-semibold">SPEECH AI + DSP</div>
+              <div class="text-slate-400 text-[11px] mt-0.5">AEC &bull; NLMS &bull; Denoise</div>
+            </div>
+            <div class="bg-navy-800/70 border border-cyan-400/15 rounded-lg p-3">
+              <div class="text-cyan-300 font-semibold">EMBEDDED RT</div>
+              <div class="text-slate-400 text-[11px] mt-0.5">Real-time C/C++</div>
+            </div>
+          </div>
+
+          <!-- Primary CTAs -->
+          <div class="flex flex-wrap items-center gap-4 pt-3">
+            <a href="#lab" class="px-6 py-3.5 rounded-lg bg-cyan-400 text-navy-950 font-semibold text-sm hover:bg-cyan-300 transition-all shadow-lg shadow-cyan-400/20 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+              Explore Interactive Audio Lab
+            </a>
+            <a href="#solutions" class="px-6 py-3.5 rounded-lg bg-navy-800 border border-cyan-400/35 text-white font-medium text-sm hover:border-cyan-300 hover:text-cyan-300 transition-all">
+              Explore DSP Concepts
+            </a>
+          </div>
+        </div>
+
+        <!-- Right Live Animated Acoustic Array Canvas Diagram -->
+        <div class="lg:col-span-5">
+          <div class="tech-card rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+            <div class="flex items-center justify-between border-b border-cyan-400/15 pb-3 mb-3">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-cyan-300 animate-ping"></span>
+                <span class="font-mono text-xs text-slate-300">ILLUSTRATIVE ARRAY CONCEPT</span>
+              </div>
+              <span class="font-mono text-[11px] text-cyan-400">Illustrative</span>
+            </div>
+
+            <div class="relative w-full h-64 sm:h-72 rounded-xl bg-navy-950/90 border border-cyan-400/10 overflow-hidden">
+              <canvas id="heroArrayCanvas" class="w-full h-full"></canvas>
+            </div>
+
+            <div class="mt-3 grid grid-cols-2 gap-2 font-mono text-[11px]">
+              <div class="flex items-center gap-2 bg-navy-950/70 px-3 py-2 rounded-lg border border-cyan-400/10">
+                <span class="w-2.5 h-2.5 rounded-full bg-cyan-300"></span>
+                <span class="text-slate-300">Target Voice (0&deg; Main Lobe)</span>
+              </div>
+              <div class="flex items-center gap-2 bg-navy-950/70 px-3 py-2 rounded-lg border border-rose-400/20">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span>
+                <span class="text-slate-300">Interference (+45&deg; Null)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- SECTION 02 — SERVICES                                                 -->
+  <!-- ===================================================================== -->
+  <section id="services" class="py-20 lg:py-24 border-b border-cyan-400/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl mb-14">
+        <div class="font-mono text-xs text-cyan-400 tracking-widest uppercase mb-2">02 &mdash; Engineering Capabilities</div>
+        <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">Core Audio DSP &amp; Voice Engineering Services</h2>
+        <p class="mt-3 text-slate-400 text-sm sm:text-base leading-relaxed">
+          From mathematical formulation and simulation to efficient, real-time software implementation across a range of computing environments.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Service 1 -->
+        <div class="tech-card rounded-xl p-6 flex flex-col justify-between">
+          <div>
+            <div class="w-11 h-11 rounded-lg bg-navy-950 border border-cyan-400/30 flex items-center justify-center text-cyan-300 mb-5">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+              </svg>
+            </div>
+            <div class="font-mono text-[11px] text-cyan-400 mb-1">SERVICE 01</div>
+            <h3 class="text-lg font-semibold text-white mb-2.5">Audio DSP Architecture &amp; Prototyping</h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              End-to-end algorithm design, acoustic modeling, and bit-exact verification transitioning smoothly from MATLAB/Python prototypes to fixed- and floating-point C/C++.
+            </p>
+          </div>
+          <div class="mt-5 pt-4 border-t border-cyan-400/10 font-mono text-[11px] text-slate-300">
+            MATLAB &bull; Python &bull; ANSI C/C++ &bull; Fixed-Point Q15/Q31
+          </div>
+        </div>
+
+        <!-- Service 2 -->
+        <div class="tech-card rounded-xl p-6 flex flex-col justify-between">
+          <div>
+            <div class="w-11 h-11 rounded-lg bg-navy-950 border border-cyan-400/30 flex items-center justify-center text-cyan-300 mb-5">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="2" />
+                <path stroke-linecap="round" d="M16.24 7.76a6 6 0 010 8.49m-8.48-.01a6 6 0 010-8.49m11.31-2.82a10 10 0 010 14.14m-14.14 0a10 10 0 010-14.14" />
+              </svg>
+            </div>
+            <div class="font-mono text-[11px] text-cyan-400 mb-1">SERVICE 02</div>
+            <h3 class="text-lg font-semibold text-white mb-2.5">Microphone Arrays &amp; Adaptive Beamforming</h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              Geometry optimization, calibration, and spatial filtering pipelines including MVDR, Generalized Sidelobe Canceller (GSC), superdirective arrays, and acoustic DOA tracking.
+            </p>
+          </div>
+          <div class="mt-5 pt-4 border-t border-cyan-400/10 font-mono text-[11px] text-slate-300">
+            MVDR &bull; GSC &bull; SRP-PHAT &bull; MUSIC / SRP-PHAT
+          </div>
+        </div>
+
+        <!-- Service 3 -->
+        <div class="tech-card rounded-xl p-6 flex flex-col justify-between">
+          <div>
+            <div class="w-11 h-11 rounded-lg bg-navy-950 border border-cyan-400/30 flex items-center justify-center text-cyan-300 mb-5">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12h3l3-7 4 14 3-7h5" />
+              </svg>
+            </div>
+            <div class="font-mono text-[11px] text-cyan-400 mb-1">SERVICE 03</div>
+            <h3 class="text-lg font-semibold text-white mb-2.5">Acoustic Echo &amp; Noise Cancellation</h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              Acoustic echo cancellation (AEC), adaptive interference cancellation (AIC), double-talk-aware processing concepts, adaptive filtering and cross-spectral analysis.
+            </p>
+          </div>
+          <div class="mt-5 pt-4 border-t border-cyan-400/10 font-mono text-[11px] text-slate-300">
+            Multi-Channel AEC &bull; PBFDAF &bull; NLMS &bull; Cross-PSD
+          </div>
+        </div>
+
+        <!-- Service 4 -->
+        <div class="tech-card rounded-xl p-6 flex flex-col justify-between">
+          <div>
+            <div class="w-11 h-11 rounded-lg bg-navy-950 border border-cyan-400/30 flex items-center justify-center text-cyan-300 mb-5">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 10v2a7 7 0 01-14 0v-2M12 19v4m-4 0h8" />
+              </svg>
+            </div>
+            <div class="font-mono text-[11px] text-cyan-400 mb-1">SERVICE 04</div>
+            <h3 class="text-lg font-semibold text-white mb-2.5">Speech Enhancement &amp; Intelligent Voice</h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              Signal-processing-led speech enhancement, dereverberation, voice activity detection and source-separation methods, with machine learning considered where it adds clear value.
+            </p>
+          </div>
+          <div class="mt-5 pt-4 border-t border-cyan-400/10 font-mono text-[11px] text-slate-300">
+            Hybrid DSP+ML &bull; Neural VAD &bull; Dereverberation
+          </div>
+        </div>
+
+        <!-- Service 5 -->
+        <div class="tech-card rounded-xl p-6 flex flex-col justify-between md:col-span-2 lg:col-span-2">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+            <div class="lg:col-span-8">
+              <div class="w-11 h-11 rounded-lg bg-navy-950 border border-cyan-400/30 flex items-center justify-center text-cyan-300 mb-5">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div class="font-mono text-[11px] text-cyan-400 mb-1">SERVICE 05</div>
+              <h3 class="text-lg font-semibold text-white mb-2.5">Real-Time Embedded Audio Implementation</h3>
+              <p class="text-sm text-slate-400 leading-relaxed">
+                Implementation-oriented audio software engineering, including efficient C/C++ processing, memory-aware design, profiling, integration and real-time considerations. Platform selection is project-dependent.
+              </p>
+            </div>
+            <div class="lg:col-span-4 bg-navy-950/90 border border-cyan-400/15 rounded-lg p-4 font-mono text-xs space-y-2.5">
+              <div class="flex justify-between">
+                <span class="text-slate-400">Engineering focus</span>
+                <span class="text-cyan-300">Real-time design</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Implementation</span>
+                <span class="text-white">C / C++</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Platforms</span>
+                <span class="text-white">Project-dependent</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Design priorities</span>
+                <span class="text-cyan-300">Efficiency &amp; reliability</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- SECTION 03 — TECHNICAL SOLUTIONS (FLAGSHIP + 3 CASE STUDIES)          -->
+  <!-- ===================================================================== -->
+  <section id="solutions" class="py-20 lg:py-24 bg-navy-950/50 border-b border-cyan-400/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl mb-14">
+        <div class="font-mono text-xs text-cyan-400 tracking-widest uppercase mb-2">03 &mdash; Interactive Engineering Concepts</div>
+        <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">Audio DSP Concepts &amp; Engineering Methods</h2>
+        <p class="mt-3 text-slate-400 text-sm sm:text-base leading-relaxed">
+          Interactive, illustrative signal-processing examples. These visualizations use generated test signals and are not customer results or performance claims.
+        </p>
+      </div>
+
+      <!-- =============================================================== -->
+      <!-- FLAGSHIP 1: MULTI-MICROPHONE NOISE CANCELLATION                 -->
+      <!-- =============================================================== -->
+      <div class="tech-card rounded-2xl p-6 sm:p-8 mb-10">
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-cyan-400/15 pb-5 mb-6">
+          <div>
+            <span class="px-2.5 py-1 rounded bg-cyan-400/15 border border-cyan-400/30 font-mono text-[11px] text-cyan-300 uppercase">
+              Interactive Example 01
+            </span>
+            <h3 class="text-xl sm:text-2xl font-bold text-white mt-2">
+              Adaptive Interference Cancellation — Concept
+            </h3>
+          </div>
+          <div class="flex items-center gap-4 font-mono text-xs">
+            <div class="bg-navy-950 px-3.5 py-2 rounded-lg border border-cyan-400/20">
+              <span class="text-slate-400 block text-[10px]">DEMO TYPE</span>
+              <span class="text-cyan-300 font-semibold text-sm">Synthetic signals</span>
+            </div>
+            <div class="bg-navy-950 px-3.5 py-2 rounded-lg border border-cyan-400/20">
+              <span class="text-slate-400 block text-[10px]">METHOD</span>
+              <span class="text-white font-semibold text-sm">Adaptive filtering</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <!-- Problem & Solution Explanation -->
+          <div class="lg:col-span-5 space-y-5">
+            <div>
+              <h4 class="font-mono text-xs text-cyan-400 uppercase tracking-wider mb-1.5">The Acoustic Challenge</h4>
+              <p class="text-sm text-slate-300 leading-relaxed">
+                Illustrative two-channel example showing how a reference microphone can help estimate interference in a primary microphone signal. Real-world behavior depends on microphone placement, signal correlation and acoustic conditions.
+              </p>
+            </div>
+            <div>
+              <h4 class="font-mono text-xs text-cyan-400 uppercase tracking-wider mb-1.5">Engineering Architecture</h4>
+              <p class="text-sm text-slate-300 leading-relaxed">
+                The conceptual signal path combines an adaptive filter with a reference signal to estimate a correlated interference component. The plotted signals are synthetic and are intended to explain the principle, not to represent measured cancellation performance.
+              </p>
+            </div>
+
+            <!-- Interactive Channel Selector Buttons -->
+            <div class="pt-2">
+              <div class="font-mono text-[11px] text-slate-400 uppercase mb-2.5">Inspect Signal Stage:</div>
+              <div class="grid grid-cols-2 gap-2 font-mono text-xs" id="ancStageButtons">
+                <button data-stage="all" class="anc-btn active px-3 py-2.5 rounded-lg bg-cyan-400 text-navy-950 font-semibold text-left transition-all">
+                  All Stages Overlay
+                </button>
+                <button data-stage="primary" class="anc-btn px-3 py-2.5 rounded-lg bg-navy-950 border border-cyan-400/20 text-slate-300 hover:border-cyan-300 text-left transition-all">
+                  1. Primary Mic (d[n])
+                </button>
+                <button data-stage="interference" class="anc-btn px-3 py-2.5 rounded-lg bg-navy-950 border border-cyan-400/20 text-slate-300 hover:border-cyan-300 text-left transition-all">
+                  2. Est. Interference (y[n])
+                </button>
+                <button data-stage="enhanced" class="anc-btn px-3 py-2.5 rounded-lg bg-navy-950 border border-cyan-400/20 text-slate-300 hover:border-cyan-300 text-left transition-all">
+                  3. Enhanced Output (e[n])
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive Multi-Trace Waveform Canvas -->
+          <div class="lg:col-span-7 bg-navy-950 rounded-xl border border-cyan-400/15 p-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3 font-mono text-[11px]">
+              <span class="text-slate-300">SYNTHETIC SIGNAL DECOMPOSITION</span>
+              <div class="flex items-center gap-3">
+                <span class="flex items-center gap-1.5 text-slate-400"><span class="w-2.5 h-0.5 bg-slate-400 inline-block"></span>Primary</span>
+                <span class="flex items-center gap-1.5 text-rose-400"><span class="w-2.5 h-0.5 bg-rose-400 inline-block"></span>Est. Noise</span>
+                <span class="flex items-center gap-1.5 text-cyan-300"><span class="w-2.5 h-0.5 bg-cyan-300 inline-block"></span>Enhanced</span>
+              </div>
+            </div>
+            <div class="w-full h-64 sm:h-72 relative">
+              <canvas id="ancWaveformCanvas" class="w-full h-full"></canvas>
+            </div>
+            <div class="mt-3 pt-2.5 border-t border-cyan-400/10 flex flex-wrap justify-between gap-2 font-mono text-[11px] text-slate-400">
+              <span>Illustrative adaptive-filter signal path</span>
+              <span>Generated test signals</span>
+              <span class="text-cyan-300">No measured performance claim</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =============================================================== -->
+      <!-- FLAGSHIP 2: ADAPTIVE BEAMFORMING                                -->
+      <!-- =============================================================== -->
+      <div class="tech-card rounded-2xl p-6 sm:p-8 mb-12">
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-cyan-400/15 pb-5 mb-6">
+          <div>
+            <span class="px-2.5 py-1 rounded bg-cyan-400/15 border border-cyan-400/30 font-mono text-[11px] text-cyan-300 uppercase">
+              Interactive Example 02
+            </span>
+            <h3 class="text-xl sm:text-2xl font-bold text-white mt-2">
+              Spatial Filtering &amp; Array Response Concepts
+            </h3>
+          </div>
+          <div class="flex items-center gap-4 font-mono text-xs">
+            <div class="bg-navy-950 px-3.5 py-2 rounded-lg border border-cyan-400/20">
+              <span class="text-slate-400 block text-[10px]">VISUALIZATION</span>
+              <span id="bfNullDepthMetric" class="text-cyan-300 font-semibold text-sm">Illustrative</span>
+            </div>
+            <div class="bg-navy-950 px-3.5 py-2 rounded-lg border border-cyan-400/20">
+              <span class="text-slate-400 block text-[10px]">ARRAY GEOMETRY</span>
+              <span class="text-white font-semibold text-sm">Configurable concept</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <!-- Interactive Polar Beam Pattern Plot -->
+          <div class="lg:col-span-6 bg-navy-950 rounded-xl border border-cyan-400/15 p-4">
+            <div class="flex items-center justify-between mb-2 font-mono text-[11px]">
+              <span class="text-slate-300">ILLUSTRATIVE ARRAY RESPONSE (f = selected frequency)</span>
+              <span class="text-cyan-300">Normalized response (illustrative)</span>
+            </div>
+            <div class="w-full h-72 sm:h-80 relative flex items-center justify-center">
+              <canvas id="beamformerCanvas" class="w-full h-full"></canvas>
+            </div>
+          </div>
+
+          <!-- Controls & Technical Explanation -->
+          <div class="lg:col-span-6 space-y-5">
+            <div>
+              <h4 class="font-mono text-xs text-cyan-400 uppercase tracking-wider mb-1.5">Spatial Filtering Principle</h4>
+              <p class="text-sm text-slate-300 leading-relaxed">
+                This simplified plot illustrates how steering direction and an interference direction can shape a spatial response. It is not an MVDR implementation or a measured microphone-array result.
+              </p>
+            </div>
+
+            <!-- Interactive Sliders for Beam Steering & Null Placement -->
+            <div class="bg-navy-950/90 border border-cyan-400/20 rounded-xl p-5 space-y-4">
+              <div>
+                <div class="flex justify-between font-mono text-xs mb-1.5">
+                  <label for="lookAngleSlider" class="text-cyan-300">Target Look Direction (&theta;<sub>s</sub>)</label>
+                  <span id="lookAngleValue" class="text-white font-semibold">0&deg;</span>
+                </div>
+                <input id="lookAngleSlider" type="range" min="-60" max="60" value="0" step="1" class="w-full" />
+              </div>
+
+              <div>
+                <div class="flex justify-between font-mono text-xs mb-1.5">
+                  <label for="nullAngleSlider" class="text-rose-400">Interference Null Angle (&theta;<sub>i</sub>)</label>
+                  <span id="nullAngleValue" class="text-white font-semibold">+45&deg;</span>
+                </div>
+                <input id="nullAngleSlider" type="range" min="-75" max="75" value="45" step="1" class="w-full" />
+              </div>
+
+              <div>
+                <div class="flex justify-between font-mono text-xs mb-1.5">
+                  <label for="bfFreqSlider" class="text-slate-300">Analysis Frequency (f)</label>
+                  <span id="bfFreqValue" class="text-white font-semibold">2400 Hz</span>
+                </div>
+                <input id="bfFreqSlider" type="range" min="800" max="4500" value="2400" step="100" class="w-full" />
+              </div>
+            </div>
+
+            <!-- Output Comparison Bar -->
+            <div class="grid grid-cols-2 gap-3 font-mono text-xs">
+              <div class="bg-navy-950/70 p-3.5 rounded-lg border border-slate-400/20">
+                <div class="text-slate-400 text-[10px]">REFERENCE EXAMPLE</div>
+                <div class="text-slate-200 font-semibold text-base mt-0.5">Illustrative</div>
+                <div class="text-[11px] text-slate-400 mt-1">Severe off-axis crosstalk</div>
+              </div>
+              <div class="bg-navy-950/70 p-3.5 rounded-lg border border-cyan-400/30">
+                <div class="text-cyan-400 text-[10px]">SPATIAL RESPONSE EXAMPLE</div>
+                <div id="bfSinrMetric" class="text-cyan-300 font-semibold text-base mt-0.5">Not measured</div>
+                <div class="text-[11px] text-slate-300 mt-1">Conceptual steering direction</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =============================================================== -->
+      <!-- CASE STUDIES 3, 4, AND 5 (EXPANDABLE / INTERACTIVE TABS)        -->
+      <!-- =============================================================== -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Interactive example 3: synthetic spectrogram -->
+        <div class="tech-card rounded-xl p-6 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="font-mono text-[11px] text-cyan-400">INTERACTIVE EXAMPLE 03</span>
+              <span class="font-mono text-[11px] px-2 py-0.5 rounded bg-navy-950 text-cyan-300 border border-cyan-400/20">ILLUSTRATIVE</span>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Speech Enhancement &amp; Denoising</h3>
+            <p class="text-xs sm:text-sm text-slate-400 leading-relaxed mb-4">
+              This generated spectrogram-style graphic is a visual aid only. It is not the output of a denoising model or an audio quality comparison.
+            </p>
+
+            <!-- Interactive Before/After Spectrogram Comparison Canvas -->
+            <div class="bg-navy-950 rounded-lg border border-cyan-400/15 p-3 mb-4">
+              <div class="flex justify-between font-mono text-[10px] text-slate-400 mb-1.5">
+                <span>NOISY INPUT</span>
+                <span class="text-cyan-300">DRAG SPLIT &harr;</span>
+                <span>ENHANCED</span>
+              </div>
+              <div class="relative w-full h-36 rounded overflow-hidden">
+                <canvas id="specCompareCanvas" class="w-full h-full"></canvas>
+              </div>
+              <input id="specSplitSlider" type="range" min="5" max="95" value="50" class="w-full mt-2.5" aria-label="Spectrogram Before After Split" />
+            </div>
+          </div>
+          <div class="font-mono text-[11px] text-slate-300 pt-3 border-t border-cyan-400/10 flex justify-between">
+            <span>Illustrative time-frequency display</span>
+            <span class="text-cyan-300">No benchmark</span>
+          </div>
+        </div>
+
+        <!-- Interactive example 4: generated spatial spectrum -->
+        <div class="tech-card rounded-xl p-6 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="font-mono text-[11px] text-cyan-400">INTERACTIVE EXAMPLE 04</span>
+              <span class="font-mono text-[11px] px-2 py-0.5 rounded bg-navy-950 text-cyan-300 border border-cyan-400/20">SYNTHETIC EXAMPLE</span>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Direction of Arrival (DOA) Estimation</h3>
+            <p class="text-xs sm:text-sm text-slate-400 leading-relaxed mb-4">
+              Conceptual overview of spatial spectrum methods such as MUSIC and SRP-PHAT. The graphic is illustrative and does not process recorded microphone-array data.
+            </p>
+
+            <!-- MVDR Spatial Pseudo-Spectrum Canvas -->
+            <div class="bg-navy-950 rounded-lg border border-cyan-400/15 p-3 mb-4">
+              <div class="flex justify-between font-mono text-[10px] text-slate-400 mb-1.5">
+                <span>SYNTHETIC SPATIAL SPECTRUM EXAMPLE</span>
+                <span class="text-cyan-300">Generated example</span>
+              </div>
+              <div class="relative w-full h-36 rounded overflow-hidden">
+                <canvas id="doaSpectrumCanvas" class="w-full h-full"></canvas>
+              </div>
+              <div class="mt-2.5 flex justify-between font-mono text-[10px] text-slate-400">
+                <span>-90&deg;</span>
+                <span>0&deg; Broadside</span>
+                <span>+90&deg;</span>
+              </div>
+            </div>
+          </div>
+          <div class="font-mono text-[11px] text-slate-300 pt-3 border-t border-cyan-400/10 flex justify-between">
+            <span>Conceptual spatial spectrum</span>
+            <span class="text-cyan-300">Illustrative plot</span>
+          </div>
+        </div>
+
+        <!-- Engineering topic: real-time software -->
+        <div class="tech-card rounded-xl p-6 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="font-mono text-[11px] text-cyan-400">ENGINEERING TOPIC</span>
+              <span class="font-mono text-[11px] px-2 py-0.5 rounded bg-navy-950 text-cyan-300 border border-cyan-400/20">IMPLEMENTATION</span>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Real-Time Audio Software Engineering</h3>
+            <p class="text-xs sm:text-sm text-slate-400 leading-relaxed mb-4">
+              Engineering considerations for real-time audio software include predictable processing, memory use, buffering, profiling and integration. Actual constraints are established with each project.
+            </p>
+
+            <!-- Project planning considerations -->
+            <div class="bg-navy-950 rounded-lg border border-cyan-400/15 p-3.5 mb-4 font-mono text-xs space-y-2.5">
+              <div>
+                <div class="flex justify-between text-[11px] mb-1">
+                  <span class="text-slate-400">Processing budget</span>
+                  <span class="text-cyan-300">Project-defined</span>
+                </div>
+                <div class="w-full bg-navy-800 h-1.5 rounded-full overflow-hidden">
+                  <div class="bg-cyan-300 h-full rounded-full" style="width: 18%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-[11px] mb-1">
+                  <span class="text-slate-400">Memory budget</span>
+                  <span class="text-white">Project-defined</span>
+                </div>
+                <div class="w-full bg-navy-800 h-1.5 rounded-full overflow-hidden">
+                  <div class="bg-cyan-400 h-full rounded-full" style="width: 28%"></div>
+                </div>
+              </div>
+
+              <div class="pt-1 grid grid-cols-2 gap-2 text-[11px]">
+                <div class="bg-navy-900 p-2 rounded border border-cyan-400/10">
+                  <span class="text-slate-400 block text-[10px]">BLOCK SIZE</span>
+                  <span class="text-white">Project-defined</span>
+                </div>
+                <div class="bg-navy-900 p-2 rounded border border-cyan-400/10">
+                  <span class="text-slate-400 block text-[10px]">I/O LATENCY</span>
+                  <span class="text-cyan-300">Measured per project</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="font-mono text-[11px] text-slate-300 pt-3 border-t border-cyan-400/10 flex justify-between">
+            <span>Implementation choices are project-specific</span>
+            <span class="text-cyan-300">Validation-led</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- SECTION 04 — INTERACTIVE AUDIO LABORATORY (WEB AUDIO API WORKBENCH)   -->
+  <!-- ===================================================================== -->
+  <section id="lab" class="py-20 lg:py-28 border-b border-cyan-400/10 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Header -->
+      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10">
+        <div>
+          <div class="inline-flex items-center gap-2 font-mono text-xs text-cyan-300 tracking-widest uppercase mb-2">
+            <span class="w-2 h-2 rounded-full bg-cyan-300 animate-pulse"></span>
+            04 &mdash; Live Browser-Based Web Audio API Workbench
+          </div>
+          <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">Interactive Audio Laboratory</h2>
+          <p class="mt-2 text-slate-400 text-sm sm:text-base max-w-2xl">
+            Explore browser-based audio filtering and generated test-signal visualizations. Audio uploads and microphone input are processed locally in your browser by this demo and are not sent to Basamad by the page. The page loads styling and font assets from external services; no performance benchmark is implied.
+          </p>
+        </div>
+
+        <!-- Master Transport Controls -->
+        <div class="flex flex-wrap items-center gap-3">
+          <button id="labPlayBtn" class="px-5 py-3 rounded-lg bg-cyan-400 text-navy-950 font-semibold text-sm hover:bg-cyan-300 transition-all flex items-center gap-2 shadow-lg shadow-cyan-400/20">
+            <svg id="labPlayIcon" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+            <span id="labPlayText">Start Audio Engine</span>
+          </button>
+
+          <button id="labBypassBtn" class="px-4 py-3 rounded-lg bg-navy-800 border border-cyan-400/35 text-cyan-300 font-mono text-xs hover:border-cyan-300 transition-all">
+            MODE: PROCESSED (WET)
+          </button>
+        </div>
+      </div>
+
+      <!-- Status / Notification Banner (Replaces alert()) -->
+      <div id="labStatusBanner" class="hidden mb-6 px-4 py-3 rounded-lg bg-navy-800 border border-cyan-400/40 font-mono text-xs text-cyan-300 flex items-center justify-between">
+        <span id="labStatusText">Audio engine initialized.</span>
+        <button id="labStatusClose" class="text-slate-400 hover:text-white ml-4">&times;</button>
+      </div>
+
+      <!-- Main DSP Workbench Grid -->
+      <div class="tech-card rounded-2xl p-5 sm:p-7">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-7">
+          <!-- Left Column: Signal Source & DSP Algorithm Controls -->
+          <div class="lg:col-span-4 space-y-6">
+            <!-- 1. Signal Source Selection -->
+            <div class="bg-navy-950/90 border border-cyan-400/15 rounded-xl p-4 space-y-3">
+              <div class="font-mono text-xs text-cyan-400 uppercase tracking-wider">1. Input Signal Source</div>
+              <select id="labSourceSelect" class="w-full bg-navy-800 border border-cyan-400/25 rounded-lg px-3 py-2.5 text-xs sm:text-sm text-white font-mono focus:outline-none focus:border-cyan-300">
+                <option value="speech_noise">Synth: Speech Formants + Broadband Noise</option>
+                <option value="speech_tone">Synth: Voice + 1.8 kHz Interfering Tone</option>
+                <option value="chirp_sweep">Synth: Swept Sine Chirp (100 Hz - 6 kHz)</option>
+                <option value="custom_file">Uploaded Audio File (WAV / MP3 / OGG)</option>
+                <option value="live_mic">Live Microphone Input (WebAudio)</option>
+              </select>
+
+              <!-- File Upload Dropzone / Button -->
+              <div class="pt-1">
+                <label for="audioFileInput" class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-dashed border-cyan-400/35 bg-navy-900/60 hover:border-cyan-300 cursor-pointer transition-colors text-xs font-mono text-slate-300">
+                  <svg class="w-4 h-4 text-cyan-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  <span id="uploadedFileName">Upload Custom Audio (.wav / .mp3)</span>
+                </label>
+                <input id="audioFileInput" type="file" accept="audio/*" class="hidden" />
+              </div>
+            </div>
+
+            <!-- 2. Algorithm Selection -->
+            <div class="bg-navy-950/90 border border-cyan-400/15 rounded-xl p-4 space-y-3">
+              <div class="font-mono text-xs text-cyan-400 uppercase tracking-wider">2. DSP Processing Chain</div>
+              <select id="labAlgoSelect" class="w-full bg-navy-800 border border-cyan-400/25 rounded-lg px-3 py-2.5 text-xs sm:text-sm text-white font-mono focus:outline-none focus:border-cyan-300">
+                <option value="speech_enhance">Speech Bandpass + Noise Gate Enhancement</option>
+                <option value="notch_cancel">Adaptive Notch Interference Canceller</option>
+                <option value="beamformer_sim">Dual-Mic Spatial Beamformer Simulation</option>
+                <option value="bypass">Bypass (Unprocessed Raw Signal)</option>
+              </select>
+              <p id="labAlgoDesc" class="text-xs text-slate-400 leading-relaxed">
+                Applies a 4th-order voice-band filter (300 Hz &ndash; 3.4 kHz) coupled with dynamic envelope noise suppression to attenuate out-of-band hiss and rumble.
+              </p>
+            </div>
+
+            <!-- 3. Real-Time Tunable Parameters -->
+            <div class="bg-navy-950/90 border border-cyan-400/15 rounded-xl p-4 space-y-4">
+              <div class="font-mono text-xs text-cyan-400 uppercase tracking-wider">3. Tunable DSP Parameters</div>
+
+              <div>
+                <div class="flex justify-between font-mono text-xs mb-1">
+                  <label for="paramSuppression" class="text-slate-300">Suppression / Filter Depth</label>
+                  <span id="paramSuppressionVal" class="text-cyan-300">75%</span>
+                </div>
+                <input id="paramSuppression" type="range" min="0" max="100" value="75" class="w-full" />
+              </div>
+
+              <div>
+                <div class="flex justify-between font-mono text-xs mb-1">
+                  <label for="paramCutoff" class="text-slate-300">Center / Cutoff Frequency</label>
+                  <span id="paramCutoffVal" class="text-cyan-300">1800 Hz</span>
+                </div>
+                <input id="paramCutoff" type="range" min="250" max="4500" value="1800" step="50" class="w-full" />
+              </div>
+
+              <div>
+                <div class="flex justify-between font-mono text-xs mb-1">
+                  <label for="paramNoiseFloor" class="text-slate-300">Injected Noise Level</label>
+                  <span id="paramNoiseFloorVal" class="text-rose-400">-18 dB</span>
+                </div>
+                <input id="paramNoiseFloor" type="range" min="-45" max="-6" value="-18" step="1" class="w-full" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Dual Real-Time Visualization Canvases + Telemetry -->
+          <div class="lg:col-span-8 flex flex-col justify-between space-y-5">
+            <!-- Top Canvas: Time-Domain Oscilloscope -->
+            <div class="bg-navy-950 rounded-xl border border-cyan-400/20 p-4">
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-2 font-mono text-[11px]">
+                <span class="text-slate-300">TIME-DOMAIN WAVEFORM OSCILLOSCOPE</span>
+                <div class="flex items-center gap-4">
+                  <span class="flex items-center gap-1.5 text-slate-400">
+                    <span class="w-2.5 h-0.5 bg-slate-500 inline-block"></span>Raw Input
+                  </span>
+                  <span class="flex items-center gap-1.5 text-cyan-300">
+                    <span class="w-2.5 h-0.5 bg-cyan-300 inline-block"></span>DSP Output
+                  </span>
+                </div>
+              </div>
+              <div class="w-full h-44 sm:h-48 relative">
+                <canvas id="labWaveformCanvas" class="w-full h-full"></canvas>
+              </div>
+            </div>
+
+            <!-- Bottom Canvas: Real-Time FFT Spectrum + Waterfall Spectrogram -->
+            <div class="bg-navy-950 rounded-xl border border-cyan-400/20 p-4">
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-2 font-mono text-[11px]">
+                <span class="text-slate-300">REAL-TIME FFT SPECTRUM &amp; SCROLLING SPECTROGRAM (0 &ndash; 8 kHz)</span>
+                <span class="text-cyan-400">Browser-generated visualization</span>
+              </div>
+              <div class="w-full h-52 sm:h-56 relative">
+                <canvas id="labSpectrumCanvas" class="w-full h-full"></canvas>
+              </div>
+            </div>
+
+            <!-- Telemetry Metrics Bar -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
+              <div class="bg-navy-950/90 border border-cyan-400/15 rounded-lg p-3">
+                <span class="text-slate-400 block text-[10px]">SAMPLE RATE</span>
+                <span id="telemetrySampleRate" class="text-white font-semibold">48,000 Hz</span>
+              </div>
+              <div class="bg-navy-950/90 border border-cyan-400/15 rounded-lg p-3">
+                <span class="text-slate-400 block text-[10px]">FFT RESOLUTION</span>
+                <span id="telemetryFftRes" class="text-white font-semibold">23.4 Hz / bin</span>
+              </div>
+              <div class="bg-navy-950/90 border border-cyan-400/15 rounded-lg p-3">
+                <span class="text-slate-400 block text-[10px]">PROCESSING MODE</span>
+                <span id="telemetrySnrGain" class="text-cyan-300 font-semibold">Browser demo</span>
+              </div>
+              <div class="bg-navy-950/90 border border-cyan-400/15 rounded-lg p-3">
+                <span class="text-slate-400 block text-[10px]">DSP ENGINE STATUS</span>
+                <span id="telemetryStatus" class="text-slate-300 font-semibold">STANDBY</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INTERACTIVE DSP MODULES: GENERATED TEST SIGNALS / EDUCATIONAL VISUALIZATIONS -->
+  <section id="dsp-modules" class="py-20 lg:py-24 bg-navy-950/50 border-b border-cyan-400/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl mb-10">
+        <div class="font-mono text-xs text-cyan-400 tracking-widest uppercase mb-2">Interactive DSP Modules</div>
+        <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">Explore Adaptive Audio Processing</h2>
+        <p class="mt-3 text-slate-400 text-sm sm:text-base leading-relaxed">These browser-based demonstrations use generated signals and simplified models to illustrate core DSP behavior. They are educational examples, not product benchmarks, field recordings or claims of measured performance.</p>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <article class="tech-card rounded-2xl p-5 sm:p-6">
+          <div class="font-mono text-[11px] text-cyan-400 mb-1">MODULE 01</div>
+          <h3 class="text-xl font-bold text-white mb-2">Acoustic Echo Cancellation (AEC)</h3>
+          <p class="text-sm text-slate-400 mb-4">A synthetic far-end reference is passed through an unknown echo path. An NLMS adaptive filter estimates that path; the chart compares the microphone mixture with the residual after adaptation.</p>
+          <div class="flex flex-wrap gap-2 mb-3">
+            <button id="aecRun" class="px-4 py-2 rounded-lg bg-cyan-400 text-navy-950 font-semibold text-xs">Run AEC simulation</button>
+            <label class="text-xs text-slate-300 flex items-center gap-2">Adaptation <input id="aecMu" type="range" min="0.02" max="0.8" step="0.01" value="0.25"></label>
+            <span id="aecMuVal" class="text-xs font-mono text-cyan-300">0.25</span>
+          </div>
+          <canvas id="aecCanvas" class="w-full h-48 bg-navy-950 rounded-lg border border-cyan-400/15"></canvas>
+          <div id="aecStatus" class="mt-2 text-xs font-mono text-slate-400" aria-live="polite">Ready — run the generated-signal example.</div>
+          <div class="mt-2 text-[11px] text-slate-500">Illustrative NLMS simulation; no microphone or uploaded audio is used by this module.</div>
+        </article>
+        <article class="tech-card rounded-2xl p-5 sm:p-6">
+          <div class="font-mono text-[11px] text-cyan-400 mb-1">MODULE 02</div>
+          <h3 class="text-xl font-bold text-white mb-2">Adaptive Interference Cancellation (AIC)</h3>
+          <p class="text-sm text-slate-400 mb-4">A reference channel contains interference correlated with the primary signal. A normalized adaptive filter estimates the shared component and forms a residual output.</p>
+          <div class="flex flex-wrap gap-2 mb-3">
+            <button id="aicRun" class="px-4 py-2 rounded-lg bg-cyan-400 text-navy-950 font-semibold text-xs">Run AIC simulation</button>
+            <label class="text-xs text-slate-300 flex items-center gap-2">Adaptation <input id="aicMu" type="range" min="0.02" max="0.8" step="0.01" value="0.18"></label>
+            <span id="aicMuVal" class="text-xs font-mono text-cyan-300">0.18</span>
+          </div>
+          <canvas id="aicCanvas" class="w-full h-48 bg-navy-950 rounded-lg border border-cyan-400/15"></canvas>
+          <div id="aicStatus" class="mt-2 text-xs font-mono text-slate-400" aria-live="polite">Ready — run the generated-signal example.</div>
+          <div class="mt-2 text-[11px] text-slate-500">Illustrative single-reference adaptive canceller; real systems require validation for reference leakage and desired-signal correlation.</div>
+        </article>
+        <article class="tech-card rounded-2xl p-5 sm:p-6">
+          <div class="font-mono text-[11px] text-cyan-400 mb-1">MODULE 03</div>
+          <h3 class="text-xl font-bold text-white mb-2">Adaptive EQ — Response Demonstration</h3>
+          <p class="text-sm text-slate-400 mb-4">Adjust the center frequency, gain and Q to explore a parametric equalizer response, or apply a generated-signal adaptation example. The response curve is calculated from a peaking biquad magnitude response.</p>
+          <button id="eqAdaptBtn" class="mb-3 px-4 py-2 rounded-lg bg-cyan-400 text-navy-950 font-semibold text-xs">Apply adaptive example</button>
+          <div id="eqAdaptStatus" class="text-xs text-slate-400 mb-3" aria-live="polite">Manual controls active — use the button to adapt to a generated test signal.</div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+            <label class="text-xs text-slate-300">Center frequency <span id="eqFreqVal" class="text-cyan-300">1000 Hz</span><input id="eqFreq" class="block w-full mt-2" type="range" min="100" max="8000" value="1000" step="50"></label>
+            <label class="text-xs text-slate-300">Gain <span id="eqGainVal" class="text-cyan-300">+4 dB</span><input id="eqGain" class="block w-full mt-2" type="range" min="-12" max="12" value="4" step="0.5"></label>
+            <label class="text-xs text-slate-300">Q <span id="eqQVal" class="text-cyan-300">1.0</span><input id="eqQ" class="block w-full mt-2" type="range" min="0.3" max="5" value="1" step="0.1"></label>
+          </div>
+          <canvas id="eqCanvas" class="w-full h-48 bg-navy-950 rounded-lg border border-cyan-400/15"></canvas>
+          <div class="mt-2 text-[11px] text-slate-500">The adaptation button uses a simple generated-signal level comparison to choose an illustrative EQ setting. It is not a production adaptive equalizer or a recording analysis tool.</div>
+        </article>
+        <article class="tech-card rounded-2xl p-5 sm:p-6">
+          <div class="font-mono text-[11px] text-cyan-400 mb-1">MODULE 04</div>
+          <h3 class="text-xl font-bold text-white mb-2">Multiband Compression</h3>
+          <p class="text-sm text-slate-400 mb-4">Explore independent low-, mid- and high-band compression transfer curves. Adjust each band's threshold and ratio to see how its input/output relationship changes.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+            <div class="space-y-2"><div class="text-xs font-mono text-cyan-300">LOW BAND</div><label class="block text-xs text-slate-300">Threshold <span id="mbLowTVal">-24 dB</span><input id="mbLowT" type="range" min="-48" max="-6" value="-24" step="1" class="block w-full mt-1"></label><label class="block text-xs text-slate-300">Ratio <span id="mbLowRVal">3:1</span><input id="mbLowR" type="range" min="1" max="8" value="3" step="0.5" class="block w-full mt-1"></label></div>
+            <div class="space-y-2"><div class="text-xs font-mono text-cyan-300">MID BAND</div><label class="block text-xs text-slate-300">Threshold <span id="mbMidTVal">-20 dB</span><input id="mbMidT" type="range" min="-48" max="-6" value="-20" step="1" class="block w-full mt-1"></label><label class="block text-xs text-slate-300">Ratio <span id="mbMidRVal">2:1</span><input id="mbMidR" type="range" min="1" max="8" value="2" step="0.5" class="block w-full mt-1"></label></div>
+            <div class="space-y-2"><div class="text-xs font-mono text-cyan-300">HIGH BAND</div><label class="block text-xs text-slate-300">Threshold <span id="mbHighTVal">-18 dB</span><input id="mbHighT" type="range" min="-48" max="-6" value="-18" step="1" class="block w-full mt-1"></label><label class="block text-xs text-slate-300">Ratio <span id="mbHighRVal">4:1</span><input id="mbHighR" type="range" min="1" max="8" value="4" step="0.5" class="block w-full mt-1"></label></div>
+          </div>
+          <canvas id="mbCanvas" class="w-full h-48 bg-navy-950 rounded-lg border border-cyan-400/15"></canvas>
+          <div class="mt-2 text-[11px] text-slate-500">Transfer-curve visualization only. A production multiband processor also requires crossover design, band alignment, detector behavior, attack/release and recombination.</div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- SECTION 05 — TECHNOLOGY & RESEARCH                                    -->
+  <!-- ===================================================================== -->
+  <section id="research" class="py-20 lg:py-24 bg-navy-950/50 border-b border-cyan-400/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        <div class="lg:col-span-5 space-y-5">
+          <div class="font-mono text-xs text-cyan-400 tracking-widest uppercase">06 &mdash; Technology &amp; Research</div>
+          <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">
+            Physics-Informed Signal Processing Meets Compact Machine Intelligence
+          </h2>
+          <p class="text-sm sm:text-base text-slate-300 leading-relaxed">
+            Audio engineering benefits from combining signal-processing fundamentals with data-driven methods where appropriate. Basamad emphasizes transparent algorithm design, careful evaluation and practical implementation; suitability and performance are established for each project.
+          </p>
+
+          <div class="bg-navy-800/70 border border-cyan-400/20 rounded-xl p-5 space-y-3 font-mono text-xs">
+            <div class="text-cyan-300 font-semibold">ENGINEERING &amp; EVALUATION APPROACH</div>
+            <div class="flex items-start gap-2.5 text-slate-300">
+              <span class="text-cyan-400">01.</span>
+              <span>Impulse response &amp; multi-channel acoustic scene simulation (RIR modeling)</span>
+            </div>
+            <div class="flex items-start gap-2.5 text-slate-300">
+              <span class="text-cyan-400">02.</span>
+              <span>Objective perceptual evaluation (PESQ, STOI, SI-SDR, segmental SNR)</span>
+            </div>
+            <div class="flex items-start gap-2.5 text-slate-300">
+              <span class="text-cyan-400">03.</span>
+              <span>Integration testing and profiling in the intended execution environment</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="tech-card rounded-xl p-5">
+            <div class="font-mono text-xs text-cyan-300 mb-1.5">01 / SPATIAL AUDIO</div>
+            <h3 class="text-base font-semibold text-white mb-1.5">Adaptive &amp; Spatial Audio Processing</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Multi-channel covariance tracking, diffuse noise field modeling, and binaural spatial cue preservation for hearables and conferencing endpoints.
+            </p>
+          </div>
+
+          <div class="tech-card rounded-xl p-5">
+            <div class="font-mono text-xs text-cyan-300 mb-1.5">02 / ARRAY PROCESSING</div>
+            <h3 class="text-base font-semibold text-white mb-1.5">Microphone Arrays &amp; Beamforming</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Spatial filtering concepts, including constrained beamforming and robustness to array calibration and steering uncertainty.
+            </p>
+          </div>
+
+          <div class="tech-card rounded-xl p-5">
+            <div class="font-mono text-xs text-cyan-300 mb-1.5">03 / ECHO &amp; NOISE</div>
+            <h3 class="text-base font-semibold text-white mb-1.5">Acoustic Echo &amp; Noise Cancellation</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Subband adaptive filtering with nonlinear residual echo suppression for high-volume loudspeaker-enclosure-microphone systems.
+            </p>
+          </div>
+
+          <div class="tech-card rounded-xl p-5">
+            <div class="font-mono text-xs text-cyan-300 mb-1.5">04 / VOICE INTELLIGENCE</div>
+            <h3 class="text-base font-semibold text-white mb-1.5">Speech Enhancement &amp; VAD</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Voice activity detection and audio front-end methods for speech-driven applications, evaluated against the needs of each project.
+            </p>
+          </div>
+
+          <div class="tech-card rounded-xl p-5">
+            <div class="font-mono text-xs text-cyan-300 mb-1.5">05 / REAL-TIME SOFTWARE</div>
+            <h3 class="text-base font-semibold text-white mb-1.5">Embedded Audio Processing</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Efficient implementation, memory-aware data structures, buffering strategies and profiling against project-specific processing constraints.
+            </p>
+          </div>
+
+          <div class="tech-card rounded-xl p-5">
+            <div class="font-mono text-xs text-cyan-300 mb-1.5">06 / HYBRID AI</div>
+            <h3 class="text-base font-semibold text-white mb-1.5">ML for Intelligent Audio Systems</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Selective use of compact machine-learning models alongside conventional signal-processing methods, when supported by project data and requirements.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- SECTION 06 — ABOUT & CONTACT                                          -->
+  <!-- ===================================================================== -->
+  <section id="about" class="py-20 lg:py-28">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <!-- About Column -->
+        <div class="lg:col-span-6 space-y-6">
+          <div class="font-mono text-xs text-cyan-400 tracking-widest uppercase">07 &mdash; About &amp; Contact</div>
+          <h2 class="text-2xl sm:text-4xl font-bold text-white tracking-tight">About Basamad</h2>
+
+          <div class="space-y-4 text-sm sm:text-base text-slate-300 leading-relaxed">
+            <p>
+              Basamad is an independent audio DSP engineering consultancy focused on algorithm development, adaptive signal processing, microphone-array techniques, echo control and speech-related audio systems.
+            </p>
+            <p>
+              The consulting approach connects signal-processing fundamentals with practical software engineering: clarify the acoustic problem, develop and test an algorithmic approach, then support implementation, integration and evaluation.
+            </p>
+            <p>
+              Machine learning is considered as a complementary tool when it is appropriate to the problem; the core emphasis remains on robust, explainable audio signal processing and engineering.
+            </p>
+          </div>
+
+          <!-- Technical Focus Checklist -->
+          <div class="bg-navy-800/60 border border-cyan-400/15 rounded-xl p-5">
+            <div class="font-mono text-xs text-cyan-300 uppercase mb-3">Core Technical Focus Areas</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs sm:text-sm text-slate-300">
+              <div class="flex items-center gap-2">
+                <span class="text-cyan-300 font-mono">&#9656;</span> Adaptive &amp; spatial audio processing
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-cyan-300 font-mono">&#9656;</span> Microphone arrays &amp; beamforming
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-cyan-300 font-mono">&#9656;</span> Acoustic echo &amp; noise cancellation
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-cyan-300 font-mono">&#9656;</span> Speech enhancement &amp; VAD
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-cyan-300 font-mono">&#9656;</span> Embedded audio processing
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-cyan-300 font-mono">&#9656;</span> ML for intelligent audio systems
+              </div>
+            </div>
+          </div>
+
+          <!-- Direct Contact Channels -->
+          <div class="font-mono text-xs text-slate-400">
+            Independent consultancy &bull; Collaborating remotely with research and engineering teams
+          </div>
+        </div>
+
+        <!-- Contact details are intentionally not fabricated; configure a verified address before launch. -->
+        <div class="lg:col-span-6">
+          <div class="tech-card rounded-2xl p-6 sm:p-8">
+            <h3 class="text-xl font-bold text-white mb-2">Discuss an Audio DSP Project</h3>
+            <p class="text-sm text-slate-300 leading-relaxed">Basamad welcomes technical discussions and research collaborations involving audio signal processing, adaptive filtering, microphone arrays and voice technologies.</p>
+            <p class="mt-4 text-xs text-slate-400">Business contact details will be added here once the official business email and web domain are confirmed.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- FOOTER                                                                -->
+  <!-- ===================================================================== -->
+  <footer class="bg-navy-950 border-t border-cyan-400/15 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs text-slate-400">
+      <div class="flex items-center gap-2">
+        <span class="text-white font-semibold">BASAMAD</span>
+        <span>&mdash; Independent Audio DSP Engineering</span>
+      </div>
+      <div class="text-center sm:text-right">&copy; <span id="footerYear"></span> Basamad. All rights reserved.<div class="mt-1 text-[10px] text-slate-500">Independent consultancy; not affiliated with or endorsed by any employer, platform provider or hardware vendor.</div></div>
+    </div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- INTERACTIVE DSP ENGINE & VISUALIZATION SCRIPTS                        -->
+  <!-- ===================================================================== -->
+  <script>
+    document.getElementById('footerYear').textContent = new Date().getFullYear();
+
+    // Mobile Navigation Toggle
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    mobileMenuBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+    mobileMenu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+    });
+
+    // Helper for Responsive High-DPI Canvas Setup
+    function setupHiDPICanvas(canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      if (canvas.width !== Math.floor(rect.width * dpr) || canvas.height !== Math.floor(rect.height * dpr)) {
+        canvas.width = Math.floor(rect.width * dpr);
+        canvas.height = Math.floor(rect.height * dpr);
+      }
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { ctx, width: rect.width, height: rect.height };
+    }
+
+    // =========================================================================
+    // 1. HERO ANIMATED 4-MIC LINEAR ARRAY WAVEFRONT VISUALIZATION
+    // =========================================================================
+    (function initHeroCanvas() {
+      const canvas = document.getElementById('heroArrayCanvas');
+      let phase = 0;
+
+      function renderHero() {
+        const { ctx, width, height } = setupHiDPICanvas(canvas);
+        ctx.clearRect(0, 0, width, height);
+
+        // Subtle polar/cartesian coordinate grid
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
+        ctx.lineWidth = 1;
+        for (let x = 20; x < width; x += 30) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+        }
+        for (let y = 20; y < height; y += 30) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+        }
+
+        const cx = width * 0.5;
+        const arrayY = height * 0.80;
+
+        // Draw Steered Main Lobe Beam Cone (0 deg broadside)
+        const beamGrad = ctx.createLinearGradient(cx, arrayY, cx, 15);
+        beamGrad.addColorStop(0, 'rgba(0, 229, 255, 0.24)');
+        beamGrad.addColorStop(1, 'rgba(0, 229, 255, 0.01)');
+        ctx.fillStyle = beamGrad;
+        ctx.beginPath();
+        ctx.moveTo(cx - 24, arrayY);
+        ctx.lineTo(cx - width * 0.24, 15);
+        ctx.lineTo(cx + width * 0.24, 15);
+        ctx.lineTo(cx + 24, arrayY);
+        ctx.closePath();
+        ctx.fill();
+
+        // Target Speech Wavefronts propagating down from top-center (0 deg)
+        const targetOriginX = cx;
+        const targetOriginY = height * 0.14;
+        for (let i = 0; i < 5; i++) {
+          const r = ((phase * 38 + i * 36) % 180) + 12;
+          const alpha = Math.max(0, 1 - r / 190) * 0.75;
+          ctx.strokeStyle = `rgba(0, 229, 255, ${alpha.toFixed(3)})`;
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.arc(targetOriginX, targetOriginY, r, Math.PI * 0.22, Math.PI * 0.78);
+          ctx.stroke();
+        }
+        // Target source node
+        ctx.fillStyle = '#00E5FF';
+        ctx.beginPath();
+        ctx.arc(targetOriginX, targetOriginY, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.font = '10px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#00E5FF';
+        ctx.fillText('TARGET VOICE (0°)', targetOriginX - 48, targetOriginY - 10);
+
+        // Directional Interference Wavefronts from +45 deg (Top-Right)
+        const intOriginX = width * 0.84;
+        const intOriginY = height * 0.22;
+        for (let i = 0; i < 4; i++) {
+          const r = ((phase * 46 + i * 34) % 150) + 10;
+          const alpha = Math.max(0, 1 - r / 160) * 0.55;
+          ctx.strokeStyle = `rgba(251, 113, 133, ${alpha.toFixed(3)})`;
+          ctx.lineWidth = 1.3;
+          ctx.setLineDash([4, 4]);
+          ctx.beginPath();
+          ctx.arc(intOriginX, intOriginY, r, Math.PI * 0.55, Math.PI * 1.05);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        ctx.fillStyle = '#FB7185';
+        ctx.beginPath();
+        ctx.arc(intOriginX, intOriginY, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillText('NOISE (+45°)', intOriginX - 58, intOriginY - 10);
+
+        // Draw 4-Microphone Linear Array Bar & Elements
+        const spacing = Math.min(44, width * 0.12);
+        const startX = cx - spacing * 1.5;
+        ctx.strokeStyle = '#64748B';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(startX - 14, arrayY);
+        ctx.lineTo(startX + spacing * 3 + 14, arrayY);
+        ctx.stroke();
+
+        for (let m = 0; m < 4; m++) {
+          const mx = startX + m * spacing;
+          // Signal pulse ring on mic capture
+          const pulse = (Math.sin(phase * 4 - m * 0.15) + 1) * 0.5;
+          ctx.strokeStyle = `rgba(0, 229, 255, ${0.25 + pulse * 0.45})`;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(mx, arrayY, 8 + pulse * 3, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.fillStyle = '#0A192F';
+          ctx.strokeStyle = '#38BDF8';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(mx, arrayY, 5.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#8892B0';
+          ctx.fillText(`M${m + 1}`, mx - 6, arrayY + 18);
+        }
+
+        phase += 0.018;
+        requestAnimationFrame(renderHero);
+      }
+      requestAnimationFrame(renderHero);
+    })();
+
+    // =========================================================================
+    // 2. FLAGSHIP 1: MULTI-MICROPHONE NOISE CANCELLATION WAVEFORM PLOT
+    // =========================================================================
+    (function initAncDemo() {
+      const canvas = document.getElementById('ancWaveformCanvas');
+      let selectedStage = 'all';
+
+      // Precompute deterministic synthetic speech + non-stationary noise
+      const N = 420;
+      const cleanSpeech = new Float32Array(N);
+      const noiseRef = new Float32Array(N);
+      const primaryMic = new Float32Array(N);
+      const estInterference = new Float32Array(N);
+      const enhancedOut = new Float32Array(N);
+
+      for (let i = 0; i < N; i++) {
+        const t = i / N;
+        // Syllabic speech bursts
+        const env1 = Math.exp(-Math.pow((t - 0.25) / 0.09, 2));
+        const env2 = Math.exp(-Math.pow((t - 0.62) / 0.12, 2));
+        const speech = (env1 + 0.85 * env2) * (
+          0.55 * Math.sin(2 * Math.PI * 19 * t) +
+          0.32 * Math.sin(2 * Math.PI * 43 * t + 0.6) +
+          0.18 * Math.sin(2 * Math.PI * 79 * t + 1.2)
+        );
+        // Strong engine/fan + transient interference
+        const noise = 0.42 * Math.sin(2 * Math.PI * 67 * t) +
+                      0.28 * Math.cos(2 * Math.PI * 113 * t) +
+                      0.18 * Math.sin(2 * Math.PI * 171 * t);
+
+        cleanSpeech[i] = speech;
+        noiseRef[i] = noise;
+        primaryMic[i] = speech + noise;
+        // NLMS convergence over first 15% of window
+        const conv = Math.min(1, i / 55);
+        estInterference[i] = noise * (0.94 * conv);
+        enhancedOut[i] = primaryMic[i] - estInterference[i];
+      }
+
+      function drawAnc() {
+        const { ctx, width, height } = setupHiDPICanvas(canvas);
+        ctx.clearRect(0, 0, width, height);
+
+        // Zero centerline & grid
+        ctx.strokeStyle = 'rgba(136, 146, 176, 0.15)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, height * 0.5);
+        ctx.lineTo(width, height * 0.5);
+        ctx.stroke();
+
+        function plotTrace(data, color, lineWidth, alpha = 1) {
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.strokeStyle = color;
+          ctx.lineWidth = lineWidth;
+          ctx.beginPath();
+          for (let i = 0; i < N; i++) {
+            const x = (i / (N - 1)) * width;
+            const y = height * 0.5 - data[i] * (height * 0.36);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        if (selectedStage === 'all') {
+          plotTrace(primaryMic, '#64748B', 1.3, 0.75);
+          plotTrace(estInterference, '#FB7185', 1.2, 0.7);
+          plotTrace(enhancedOut, '#00E5FF', 2.0, 1.0);
+        } else if (selectedStage === 'primary') {
+          plotTrace(primaryMic, '#94A3B8', 1.9, 1.0);
+        } else if (selectedStage === 'interference') {
+          plotTrace(estInterference, '#FB7185', 1.9, 1.0);
+        } else if (selectedStage === 'enhanced') {
+          plotTrace(enhancedOut, '#00E5FF', 2.1, 1.0);
+        }
+      }
+
+      document.querySelectorAll('.anc-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.anc-btn').forEach(b => {
+            b.classList.remove('bg-cyan-400', 'text-navy-950', 'font-semibold');
+            b.classList.add('bg-navy-950', 'border', 'border-cyan-400/20', 'text-slate-300');
+          });
+          btn.classList.remove('bg-navy-950', 'border', 'border-cyan-400/20', 'text-slate-300');
+          btn.classList.add('bg-cyan-400', 'text-navy-950', 'font-semibold');
+          selectedStage = btn.dataset.stage;
+          drawAnc();
+        });
+      });
+
+      window.addEventListener('resize', drawAnc);
+      drawAnc();
+    })();
+
+    // =========================================================================
+    // 3. FLAGSHIP 2: INTERACTIVE SPATIAL RESPONSE VISUALIZATION
+    // =========================================================================
+    (function initBeamformerDemo() {
+      const canvas = document.getElementById('beamformerCanvas');
+      const lookSlider = document.getElementById('lookAngleSlider');
+      const nullSlider = document.getElementById('nullAngleSlider');
+      const freqSlider = document.getElementById('bfFreqSlider');
+
+      const lookVal = document.getElementById('lookAngleValue');
+      const nullVal = document.getElementById('nullAngleValue');
+      const freqVal = document.getElementById('bfFreqValue');
+      const nullDepthMetric = document.getElementById('bfNullDepthMetric');
+      const sinrMetric = document.getElementById('bfSinrMetric');
+
+      function computeBeamGainDb(thetaDeg, lookDeg, nullDeg, freqHz) {
+        const c = 343.0;
+        const d = 0.035; // 35 mm spacing
+        const M = 4;     // 4-mic ULA
+        const k = (2 * Math.PI * freqHz) / c;
+        const theta = (thetaDeg * Math.PI) / 180;
+        const thetaS = (lookDeg * Math.PI) / 180;
+        const thetaI = (nullDeg * Math.PI) / 180;
+
+        // Conventional Delay-and-Sum array factor steered to thetaS
+        const psi = k * d * (Math.sin(theta) - Math.sin(thetaS));
+        let af = 1.0;
+        if (Math.abs(psi) > 1e-5) {
+          af = Math.abs(Math.sin(M * psi * 0.5) / (M * Math.sin(psi * 0.5)));
+        }
+
+        // Spatial nulling projection factor near interference angle thetaI
+        const deltaNull = Math.sin(theta) - Math.sin(thetaI);
+        const nullFactor = Math.min(1.0, Math.pow(Math.abs(deltaNull) * 3.4, 1.45) + 0.035);
+        const totalMag = Math.max(0.025, af * nullFactor);
+        return Math.max(-30, 20 * Math.log10(totalMag));
+      }
+
+      function drawBeamPattern() {
+        const { ctx, width, height } = setupHiDPICanvas(canvas);
+        ctx.clearRect(0, 0, width, height);
+
+        const lookDeg = parseFloat(lookSlider.value);
+        const nullDeg = parseFloat(nullSlider.value);
+        const freqHz = parseFloat(freqSlider.value);
+
+        lookVal.textContent = `${lookDeg > 0 ? '+' : ''}${lookDeg}°`;
+        nullVal.textContent = `${nullDeg > 0 ? '+' : ''}${nullDeg}°`;
+        freqVal.textContent = `${freqHz} Hz`;
+
+        const cx = width * 0.5;
+        const cy = height * 0.86;
+        const maxR = Math.min(width * 0.44, height * 0.76);
+
+        // Polar concentric dB rings (-10 dB, -20 dB, -30 dB)
+        [1.0, 0.66, 0.33].forEach((scale, idx) => {
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.16)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(cx, cy, maxR * scale, Math.PI, 0, false);
+          ctx.stroke();
+
+          ctx.fillStyle = '#64748B';
+          ctx.font = '10px "JetBrains Mono", monospace';
+          ctx.fillText(`${-idx * 10}dB`, cx + 4, cy - maxR * scale + 11);
+        });
+
+        // Radial angle spokes (-60, -30, 0, +30, +60)
+        [-60, -30, 0, 30, 60].forEach(deg => {
+          const rad = ((deg - 90) * Math.PI) / 180;
+          ctx.strokeStyle = 'rgba(136, 146, 176, 0.14)';
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + maxR * Math.cos(rad), cy + maxR * Math.sin(rad));
+          ctx.stroke();
+
+          const lx = cx + (maxR + 14) * Math.cos(rad) - 10;
+          const ly = cy + (maxR + 14) * Math.sin(rad) + 4;
+          ctx.fillStyle = '#8892B0';
+          ctx.fillText(`${deg > 0 ? '+' : ''}${deg}°`, lx, ly);
+        });
+
+        // Interference Angle Marker Line
+        const nullRad = ((nullDeg - 90) * Math.PI) / 180;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(251, 113, 133, 0.75)';
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + maxR * Math.cos(nullRad), cy + maxR * Math.sin(nullRad));
+        ctx.stroke();
+        ctx.restore();
+
+        // Target Look Angle Marker Line
+        const lookRad = ((lookDeg - 90) * Math.PI) / 180;
+        ctx.strokeStyle = 'rgba(0, 229, 255, 0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + maxR * Math.cos(lookRad), cy + maxR * Math.sin(lookRad));
+        ctx.stroke();
+
+        // Plot simplified spatial response (-90 to +90 deg)
+        ctx.beginPath();
+        for (let deg = -90; deg <= 90; deg += 1) {
+          const gainDb = computeBeamGainDb(deg, lookDeg, nullDeg, freqHz);
+          const normR = ((gainDb + 30) / 30) * maxR;
+          const rad = ((deg - 90) * Math.PI) / 180;
+          const px = cx + normR * Math.cos(rad);
+          const py = cy + normR * Math.sin(rad);
+          if (deg === -90) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(0, 229, 255, 0.18)';
+        ctx.fill();
+        ctx.strokeStyle = '#00E5FF';
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+
+        // Update Live Telemetry Readouts
+        nullDepthMetric.textContent = 'Illustrative';
+        sinrMetric.textContent = 'Not measured';
+      }
+
+      [lookSlider, nullSlider, freqSlider].forEach(el => el.addEventListener('input', drawBeamPattern));
+      window.addEventListener('resize', drawBeamPattern);
+      drawBeamPattern();
+    })();
+
+    // =========================================================================
+    // 4. CASE STUDY 3 & 4 CANVASES (SPECTROGRAM SPLIT & DOA PSEUDO-SPECTRUM)
+    // =========================================================================
+    (function initCaseStudyMiniCanvases() {
+      // Case Study 3: Before/After Spectrogram Split
+      const specCanvas = document.getElementById('specCompareCanvas');
+      const splitSlider = document.getElementById('specSplitSlider');
+
+      function drawSpecComparison() {
+        const { ctx, width, height } = setupHiDPICanvas(specCanvas);
+        const splitX = (parseFloat(splitSlider.value) / 100) * width;
+        const cols = 72;
+        const rows = 28;
+        const cw = width / cols;
+        const rh = height / rows;
+
+        for (let c = 0; c < cols; c++) {
+          const x = c * cw;
+          const isEnhanced = x >= splitX;
+          const t = c / cols;
+          // Speech harmonic ridges
+          const speechActive = (t > 0.15 && t < 0.42) || (t > 0.55 && t < 0.85);
+
+          for (let r = 0; r < rows; r++) {
+            const freqNorm = 1 - r / rows; // 0 bottom, 1 top
+            let energy = 0.08;
+
+            // Harmonic formants in speech band
+            if (speechActive && freqNorm > 0.1 && freqNorm < 0.65) {
+              const harmonic = Math.pow(Math.sin(freqNorm * Math.PI * 7), 2);
+              energy += 0.68 * harmonic;
+            }
+
+            // Broadband background noise (suppressed on right side of split)
+            const pseudoRand = Math.abs(Math.sin(c * 12.9898 + r * 78.233));
+            energy += (isEnhanced ? 0.04 : 0.36) * pseudoRand;
+
+            energy = Math.min(1, energy);
+            const alpha = 0.15 + energy * 0.85;
+            ctx.fillStyle = isEnhanced
+              ? `rgba(0, 229, 255, ${alpha.toFixed(2)})`
+              : `rgba(148, 163, 184, ${alpha.toFixed(2)})`;
+            ctx.fillRect(x, r * rh, cw + 0.5, rh + 0.5);
+          }
+        }
+
+        // Split Divider Line
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(splitX, 0);
+        ctx.lineTo(splitX, height);
+        ctx.stroke();
+      }
+
+      splitSlider.addEventListener('input', drawSpecComparison);
+
+      // Case Study 4: DOA MVDR Spatial Pseudo-Spectrum
+      const doaCanvas = document.getElementById('doaSpectrumCanvas');
+      function drawDoaSpectrum() {
+        const { ctx, width, height } = setupHiDPICanvas(doaCanvas);
+        ctx.clearRect(0, 0, width, height);
+
+        // Grid lines
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.12)';
+        ctx.lineWidth = 1;
+        [0.25, 0.5, 0.75].forEach(f => {
+          ctx.beginPath();
+          ctx.moveTo(width * f, 0);
+          ctx.lineTo(width * f, height);
+          ctx.stroke();
+        });
+
+        // MVDR Pseudo-spectrum curve with sharp peaks at -25 deg and +40 deg
+        ctx.beginPath();
+        for (let i = 0; i <= 180; i++) {
+          const deg = i - 90;
+          const x = (i / 180) * width;
+          const p1 = 0.85 / (1 + Math.pow((deg + 25) / 4.2, 2));
+          const p2 = 0.68 / (1 + Math.pow((deg - 40) / 5.0, 2));
+          const floor = 0.12 + 0.03 * Math.sin(deg * 0.3);
+          const val = Math.min(0.95, p1 + p2 + floor);
+          const y = height - val * (height * 0.88);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = '#00E5FF';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Peak markers
+        [
+          { deg: -25, label: '-25°' },
+          { deg: 40, label: '+40°' }
+        ].forEach(pk => {
+          const px = ((pk.deg + 90) / 180) * width;
+          ctx.strokeStyle = 'rgba(251, 113, 133, 0.8)';
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.moveTo(px, 8);
+          ctx.lineTo(px, height);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '10px "JetBrains Mono", monospace';
+          ctx.fillText(pk.label, px - 12, 14);
+        });
+      }
+
+      window.addEventListener('resize', () => {
+        drawSpecComparison();
+        drawDoaSpectrum();
+      });
+      drawSpecComparison();
+      drawDoaSpectrum();
+    })();
+
+    // =========================================================================
+    // 5. SECTION 04: REAL-TIME WEB AUDIO API INTERACTIVE LABORATORY
+    // =========================================================================
+    (function initInteractiveAudioLab() {
+      const playBtn = document.getElementById('labPlayBtn');
+      const playText = document.getElementById('labPlayText');
+      const bypassBtn = document.getElementById('labBypassBtn');
+      const sourceSelect = document.getElementById('labSourceSelect');
+      const algoSelect = document.getElementById('labAlgoSelect');
+      const algoDesc = document.getElementById('labAlgoDesc');
+      const fileInput = document.getElementById('audioFileInput');
+      const fileNameLabel = document.getElementById('uploadedFileName');
+
+      const paramSuppression = document.getElementById('paramSuppression');
+      const paramCutoff = document.getElementById('paramCutoff');
+      const paramNoiseFloor = document.getElementById('paramNoiseFloor');
+      const paramSuppressionVal = document.getElementById('paramSuppressionVal');
+      const paramCutoffVal = document.getElementById('paramCutoffVal');
+      const paramNoiseFloorVal = document.getElementById('paramNoiseFloorVal');
+
+      const statusBanner = document.getElementById('labStatusBanner');
+      const statusText = document.getElementById('labStatusText');
+      const statusClose = document.getElementById('labStatusClose');
+
+      const telemetrySampleRate = document.getElementById('telemetrySampleRate');
+      const telemetryFftRes = document.getElementById('telemetryFftRes');
+      const telemetrySnrGain = document.getElementById('telemetrySnrGain');
+      const telemetryStatus = document.getElementById('telemetryStatus');
+
+      const waveCanvas = document.getElementById('labWaveformCanvas');
+      const specCanvas = document.getElementById('labSpectrumCanvas');
+
+      let audioCtx = null;
+      let isRunning = false;
+      let isBypassed = false;
+      let uploadedBuffer = null;
+      let activeSourceNodes = [];
+      let micStream = null;
+
+      // Web Audio DSP Graph Nodes
+      let preAnalyser = null;
+      let postAnalyser = null;
+      let dryGain = null;
+      let wetGain = null;
+      let highpassFilter = null;
+      let lowpassFilter = null;
+      let notchFilter = null;
+      let compressorNode = null;
+      let noiseGainNode = null;
+
+      // Waterfall Spectrogram offscreen buffer
+      const waterfallCanvas = document.createElement('canvas');
+      waterfallCanvas.width = 480;
+      waterfallCanvas.height = 120;
+      const wfCtx = waterfallCanvas.getContext('2d');
+      wfCtx.fillStyle = '#060F1E';
+      wfCtx.fillRect(0, 0, waterfallCanvas.width, waterfallCanvas.height);
+
+      function showStatus(msg) {
+        statusText.textContent = msg;
+        statusBanner.classList.remove('hidden');
+      }
+      statusClose.addEventListener('click', () => statusBanner.classList.add('hidden'));
+
+      const algoDescriptions = {
+        speech_enhance: 'Applies a 4th-order voice-band filter (300 Hz – 3.4 kHz) coupled with dynamic envelope compression to attenuate out-of-band noise and boost speech clarity.',
+        notch_cancel: 'Cascaded high-Q biquad adaptive notch stage targeting narrowband tonal interference tuned to the selected Cutoff Frequency.',
+        beamformer_sim: 'Simulates a differential cardioid spatial filter attenuating diffuse off-axis noise while preserving on-axis voice presence.',
+        bypass: 'Direct pass-through routing raw unprocessed signal to the output analyzer for baseline comparison.'
+      };
+
+      function stopActiveSources() {
+        activeSourceNodes.forEach(node => {
+          try {
+            if (typeof node.stop === 'function') node.stop();
+            node.disconnect();
+          } catch (e) {}
+        });
+        activeSourceNodes = [];
+        if (micStream) {
+          micStream.getTracks().forEach(t => t.stop());
+          micStream = null;
+        }
+      }
+
+      function updateDspParameters() {
+        const suppPct = parseFloat(paramSuppression.value);
+        const cutoffHz = parseFloat(paramCutoff.value);
+        const noiseDb = parseFloat(paramNoiseFloor.value);
+
+        paramSuppressionVal.textContent = `${suppPct}%`;
+        paramCutoffVal.textContent = `${cutoffHz} Hz`;
+        paramNoiseFloorVal.textContent = `${noiseDb} dB`;
+
+        const algo = algoSelect.value;
+        algoDesc.textContent = algoDescriptions[algo] || '';
+
+        // No SNR or noise-reduction metric is reported by this illustrative browser workbench.
+        const effectiveBypass = isBypassed || algo === 'bypass';
+        telemetrySnrGain.textContent = effectiveBypass ? 'Bypass' : 'Filter demo';
+
+        if (!audioCtx) return;
+
+        // Dry / Wet A/B routing
+        dryGain.gain.setTargetAtTime(effectiveBypass ? 0.85 : 0.0, audioCtx.currentTime, 0.02);
+        wetGain.gain.setTargetAtTime(effectiveBypass ? 0.0 : 0.9, audioCtx.currentTime, 0.02);
+
+        // Injected noise level
+        if (noiseGainNode) {
+          const linearNoise = Math.pow(10, noiseDb / 20) * 0.45;
+          noiseGainNode.gain.setTargetAtTime(linearNoise, audioCtx.currentTime, 0.03);
+        }
+
+        // Configure filters based on selected DSP algorithm
+        if (algo === 'speech_enhance') {
+          highpassFilter.frequency.setTargetAtTime(280, audioCtx.currentTime, 0.03);
+          lowpassFilter.frequency.setTargetAtTime(Math.max(1200, cutoffHz + 1400), audioCtx.currentTime, 0.03);
+          notchFilter.Q.setTargetAtTime(0.5, audioCtx.currentTime, 0.03);
+          notchFilter.gain.setTargetAtTime(0, audioCtx.currentTime, 0.03);
+          compressorNode.threshold.setTargetAtTime(-24 - (suppPct * 0.15), audioCtx.currentTime, 0.03);
+        } else if (algo === 'notch_cancel') {
+          highpassFilter.frequency.setTargetAtTime(120, audioCtx.currentTime, 0.03);
+          lowpassFilter.frequency.setTargetAtTime(7500, audioCtx.currentTime, 0.03);
+          notchFilter.type = 'notch';
+          notchFilter.frequency.setTargetAtTime(cutoffHz, audioCtx.currentTime, 0.03);
+          notchFilter.Q.setTargetAtTime(2 + (suppPct / 100) * 26, audioCtx.currentTime, 0.03);
+        } else if (algo === 'beamformer_sim') {
+          highpassFilter.frequency.setTargetAtTime(340, audioCtx.currentTime, 0.03);
+          lowpassFilter.frequency.setTargetAtTime(4200, audioCtx.currentTime, 0.03);
+          notchFilter.type = 'peaking';
+          notchFilter.frequency.setTargetAtTime(cutoffHz, audioCtx.currentTime, 0.03);
+          notchFilter.Q.setTargetAtTime(1.8, audioCtx.currentTime, 0.03);
+          notchFilter.gain.setTargetAtTime((suppPct / 100) * 8.5, audioCtx.currentTime, 0.03);
+        }
+      }
+
+      async function buildSignalSource() {
+        stopActiveSources();
+        const mode = sourceSelect.value;
+
+        // Shared summing bus before Pre-Analyser
+        const sumBus = audioCtx.createGain();
+        sumBus.gain.value = 1.0;
+        sumBus.connect(preAnalyser);
+        activeSourceNodes.push(sumBus);
+
+        // Helper: create continuous pink-ish noise buffer
+        const bufferSize = audioCtx.sampleRate * 3;
+        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        let b0 = 0, b1 = 0, b2 = 0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          b0 = 0.99765 * b0 + white * 0.099046;
+          b1 = 0.96300 * b1 + white * 0.2965164;
+          b2 = 0.57000 * b2 + white * 1.0526913;
+          output[i] = (b0 + b1 + b2 + white * 0.1848) * 0.18;
+        }
+
+        noiseGainNode = audioCtx.createGain();
+        const noiseDb = parseFloat(paramNoiseFloor.value);
+        noiseGainNode.gain.value = Math.pow(10, noiseDb / 20) * 0.45;
+
+        if (mode === 'speech_noise' || mode === 'speech_tone') {
+          // Synthesize realistic syllabic voice-like formants (145 Hz fundamental + harmonics)
+          const carrier = audioCtx.createOscillator();
+          carrier.type = 'sawtooth';
+          carrier.frequency.value = 145;
+
+          const formantFilter = audioCtx.createBiquadFilter();
+          formantFilter.type = 'bandpass';
+          formantFilter.frequency.value = 680;
+          formantFilter.Q.value = 2.4;
+
+          // Syllabic amplitude modulation LFO (3.2 Hz cadence)
+          const syllabicGain = audioCtx.createGain();
+          syllabicGain.gain.value = 0.25;
+          const lfo = audioCtx.createOscillator();
+          lfo.frequency.value = 3.2;
+          const lfoScale = audioCtx.createGain();
+          lfoScale.gain.value = 0.24;
+          lfo.connect(lfoScale);
+          lfoScale.connect(syllabicGain.gain);
+
+          carrier.connect(formantFilter);
+          formantFilter.connect(syllabicGain);
+          syllabicGain.connect(sumBus);
+
+          carrier.start();
+          lfo.start();
+          activeSourceNodes.push(carrier, formantFilter, syllabicGain, lfo, lfoScale);
+
+          if (mode === 'speech_noise') {
+            const noiseSrc = audioCtx.createBufferSource();
+            noiseSrc.buffer = noiseBuffer;
+            noiseSrc.loop = true;
+            noiseSrc.connect(noiseGainNode);
+            noiseGainNode.connect(sumBus);
+            noiseSrc.start();
+            activeSourceNodes.push(noiseSrc, noiseGainNode);
+          } else {
+            // 1800 Hz tonal interference
+            const toneOsc = audioCtx.createOscillator();
+            toneOsc.type = 'sine';
+            toneOsc.frequency.value = 1800;
+            toneOsc.connect(noiseGainNode);
+            noiseGainNode.connect(sumBus);
+            toneOsc.start();
+            activeSourceNodes.push(toneOsc, noiseGainNode);
+          }
+        } else if (mode === 'chirp_sweep') {
+          const chirpOsc = audioCtx.createOscillator();
+          chirpOsc.type = 'sine';
+          const now = audioCtx.currentTime;
+          chirpOsc.frequency.setValueAtTime(150, now);
+          chirpOsc.frequency.exponentialRampToValueAtTime(5500, now + 4.0);
+          const chirpGain = audioCtx.createGain();
+          chirpGain.gain.value = 0.35;
+          chirpOsc.connect(chirpGain);
+          chirpGain.connect(sumBus);
+          chirpOsc.start();
+          activeSourceNodes.push(chirpOsc, chirpGain);
+        } else if (mode === 'custom_file') {
+          if (!uploadedBuffer) {
+            showStatus('Please upload a WAV/MP3 audio file first, or choose a synthesized source.');
+            sourceSelect.value = 'speech_noise';
+            return buildSignalSource();
+          }
+          const fileSrc = audioCtx.createBufferSource();
+          fileSrc.buffer = uploadedBuffer;
+          fileSrc.loop = true;
+          fileSrc.connect(sumBus);
+          fileSrc.start();
+          activeSourceNodes.push(fileSrc);
+        } else if (mode === 'live_mic') {
+          try {
+            micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const micNode = audioCtx.createMediaStreamSource(micStream);
+            micNode.connect(sumBus);
+            activeSourceNodes.push(micNode);
+            showStatus('Live microphone capture active. Use headphones to prevent acoustic feedback.');
+          } catch (err) {
+            showStatus('Microphone access unavailable or blocked in this frame. Reverting to synthesized voice + noise.');
+            sourceSelect.value = 'speech_noise';
+            return buildSignalSource();
+          }
+        }
+      }
+
+      async function startLabEngine() {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          audioCtx = new AudioContextClass();
+
+          preAnalyser = audioCtx.createAnalyser();
+          preAnalyser.fftSize = 2048;
+          preAnalyser.smoothingTimeConstant = 0.78;
+
+          postAnalyser = audioCtx.createAnalyser();
+          postAnalyser.fftSize = 2048;
+          postAnalyser.smoothingTimeConstant = 0.78;
+
+          dryGain = audioCtx.createGain();
+          wetGain = audioCtx.createGain();
+
+          highpassFilter = audioCtx.createBiquadFilter();
+          highpassFilter.type = 'highpass';
+
+          lowpassFilter = audioCtx.createBiquadFilter();
+          lowpassFilter.type = 'lowpass';
+
+          notchFilter = audioCtx.createBiquadFilter();
+          notchFilter.type = 'notch';
+
+          compressorNode = audioCtx.createDynamicsCompressor();
+          compressorNode.ratio.value = 4.5;
+          compressorNode.attack.value = 0.005;
+          compressorNode.release.value = 0.12;
+
+          // Dry Path
+          preAnalyser.connect(dryGain);
+          dryGain.connect(postAnalyser);
+
+          // Wet DSP Chain
+          preAnalyser.connect(highpassFilter);
+          highpassFilter.connect(lowpassFilter);
+          lowpassFilter.connect(notchFilter);
+          notchFilter.connect(compressorNode);
+          compressorNode.connect(wetGain);
+          wetGain.connect(postAnalyser);
+
+          // Monitor Output
+          postAnalyser.connect(audioCtx.destination);
+
+          telemetrySampleRate.textContent = `${audioCtx.sampleRate.toLocaleString()} Hz`;
+          telemetryFftRes.textContent = `${(audioCtx.sampleRate / 2048).toFixed(1)} Hz / bin`;
+        }
+
+        if (audioCtx.state === 'suspended') {
+          await audioCtx.resume();
+        }
+
+        updateDspParameters();
+        await buildSignalSource();
+
+        isRunning = true;
+        playText.textContent = 'Stop Audio Engine';
+        playBtn.classList.remove('bg-cyan-400', 'text-navy-950');
+        playBtn.classList.add('bg-rose-500', 'text-white');
+        telemetryStatus.textContent = 'RUNNING (REAL-TIME)';
+        telemetryStatus.classList.remove('text-slate-300');
+        telemetryStatus.classList.add('text-cyan-300');
+      }
+
+      function stopLabEngine() {
+        stopActiveSources();
+        isRunning = false;
+        playText.textContent = 'Start Audio Engine';
+        playBtn.classList.remove('bg-rose-500', 'text-white');
+        playBtn.classList.add('bg-cyan-400', 'text-navy-950');
+        telemetryStatus.textContent = 'STANDBY';
+        telemetryStatus.classList.remove('text-cyan-300');
+        telemetryStatus.classList.add('text-slate-300');
+      }
+
+      playBtn.addEventListener('click', () => {
+        if (isRunning) stopLabEngine();
+        else startLabEngine();
+      });
+
+      bypassBtn.addEventListener('click', () => {
+        isBypassed = !isBypassed;
+        if (isBypassed) {
+          bypassBtn.textContent = 'MODE: RAW INPUT (BYPASS)';
+          bypassBtn.classList.remove('text-cyan-300', 'border-cyan-400/35');
+          bypassBtn.classList.add('text-rose-400', 'border-rose-400/50');
+        } else {
+          bypassBtn.textContent = 'MODE: PROCESSED (WET)';
+          bypassBtn.classList.remove('text-rose-400', 'border-rose-400/50');
+          bypassBtn.classList.add('text-cyan-300', 'border-cyan-400/35');
+        }
+        updateDspParameters();
+      });
+
+      sourceSelect.addEventListener('change', () => {
+        if (isRunning) buildSignalSource();
+      });
+
+      [algoSelect, paramSuppression, paramCutoff, paramNoiseFloor].forEach(el => {
+        el.addEventListener('input', updateDspParameters);
+      });
+
+      fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        fileNameLabel.textContent = file.name.slice(0, 26);
+        try {
+          if (!audioCtx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContextClass();
+          }
+          const arrayBuffer = await file.arrayBuffer();
+          uploadedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+          sourceSelect.value = 'custom_file';
+          showStatus(`Loaded "${file.name}" (${uploadedBuffer.duration.toFixed(1)}s). Click Start Audio Engine to process.`);
+          if (isRunning) buildSignalSource();
+        } catch (err) {
+          showStatus('Unable to decode selected audio file. Please try a standard WAV or MP3.');
+        }
+      });
+
+      // Real-Time Visualization Loop (Waveform + Spectrum + Waterfall Spectrogram)
+      function renderLabVisuals() {
+        // 1. Time-Domain Oscilloscope
+        const { ctx: wCtx, width: wW, height: wH } = setupHiDPICanvas(waveCanvas);
+        wCtx.clearRect(0, 0, wW, wH);
+
+        // Oscilloscope graticule
+        wCtx.strokeStyle = 'rgba(56, 189, 248, 0.1)';
+        wCtx.lineWidth = 1;
+        wCtx.beginPath();
+        wCtx.moveTo(0, wH * 0.5);
+        wCtx.lineTo(wW, wH * 0.5);
+        wCtx.stroke();
+
+        if (isRunning && preAnalyser && postAnalyser) {
+          const rawTime = new Uint8Array(preAnalyser.fftSize);
+          const procTime = new Uint8Array(postAnalyser.fftSize);
+          preAnalyser.getByteTimeDomainData(rawTime);
+          postAnalyser.getByteTimeDomainData(procTime);
+
+          // Plot Raw Input (slate)
+          wCtx.strokeStyle = 'rgba(136, 146, 176, 0.55)';
+          wCtx.lineWidth = 1.2;
+          wCtx.beginPath();
+          for (let i = 0; i < rawTime.length; i += 2) {
+            const x = (i / rawTime.length) * wW;
+            const y = (rawTime[i] / 255) * wH;
+            if (i === 0) wCtx.moveTo(x, y);
+            else wCtx.lineTo(x, y);
+          }
+          wCtx.stroke();
+
+          // Plot Processed Output (cyan)
+          wCtx.strokeStyle = isBypassed ? '#FB7185' : '#00E5FF';
+          wCtx.lineWidth = 1.9;
+          wCtx.beginPath();
+          for (let i = 0; i < procTime.length; i += 2) {
+            const x = (i / procTime.length) * wW;
+            const y = (procTime[i] / 255) * wH;
+            if (i === 0) wCtx.moveTo(x, y);
+            else wCtx.lineTo(x, y);
+          }
+          wCtx.stroke();
+        } else {
+          wCtx.fillStyle = '#64748B';
+          wCtx.font = '11px "JetBrains Mono", monospace';
+          wCtx.fillText('AWAITING SIGNAL — CLICK "START AUDIO ENGINE"', 16, wH * 0.5 - 6);
+        }
+
+        // 2. Frequency Spectrum + Scrolling Waterfall Spectrogram
+        const { ctx: sCtx, width: sW, height: sH } = setupHiDPICanvas(specCanvas);
+        sCtx.clearRect(0, 0, sW, sH);
+
+        const specTopH = sH * 0.54;
+        const wfTopY = specTopH + 4;
+        const wfH = sH - wfTopY;
+
+        // Frequency grid labels (0 - 8 kHz)
+        const nyquist = audioCtx ? audioCtx.sampleRate / 2 : 24000;
+        const maxDisplayHz = 8000;
+        const ratio8k = Math.min(1, maxDisplayHz / nyquist);
+
+        [1000, 2000, 4000, 6000, 8000].forEach(hz => {
+          const fx = (hz / maxDisplayHz) * sW;
+          sCtx.strokeStyle = 'rgba(56, 189, 248, 0.12)';
+          sCtx.beginPath();
+          sCtx.moveTo(fx, 0);
+          sCtx.lineTo(fx, specTopH);
+          sCtx.stroke();
+          sCtx.fillStyle = '#64748B';
+          sCtx.font = '9px "JetBrains Mono", monospace';
+          sCtx.fillText(`${hz / 1000}k`, Math.min(sW - 18, fx + 3), 10);
+        });
+
+        if (isRunning && postAnalyser) {
+          const freqData = new Uint8Array(postAnalyser.frequencyBinCount);
+          postAnalyser.getByteFrequencyData(freqData);
+          const binsToShow = Math.floor(freqData.length * ratio8k);
+
+          // Draw Live FFT Curve
+          sCtx.beginPath();
+          sCtx.moveTo(0, specTopH);
+          for (let i = 0; i < binsToShow; i++) {
+            const x = (i / binsToShow) * sW;
+            const mag = freqData[i] / 255;
+            const y = specTopH - mag * (specTopH - 12);
+            sCtx.lineTo(x, y);
+          }
+          sCtx.lineTo(sW, specTopH);
+          sCtx.closePath();
+          sCtx.fillStyle = 'rgba(0, 229, 255, 0.16)';
+          sCtx.fill();
+          sCtx.strokeStyle = isBypassed ? '#FB7185' : '#00E5FF';
+          sCtx.lineWidth = 1.6;
+          sCtx.stroke();
+
+          // Scroll Waterfall Spectrogram down by 1 pixel
+          const wfW = waterfallCanvas.width;
+          const wfInternalH = waterfallCanvas.height;
+          wfCtx.drawImage(waterfallCanvas, 0, 0, wfW, wfInternalH - 1, 0, 1, wfW, wfInternalH - 1);
+
+          for (let px = 0; px < wfW; px++) {
+            const binIdx = Math.floor((px / wfW) * binsToShow);
+            const val = freqData[binIdx] / 255;
+            const r = Math.floor(val * 30);
+            const g = Math.floor(val * 229);
+            const b = Math.floor(45 + val * 210);
+            wfCtx.fillStyle = `rgb(${r},${g},${b})`;
+            wfCtx.fillRect(px, 0, 1, 1);
+          }
+        }
+
+        // Draw Waterfall buffer into bottom half
+        sCtx.drawImage(waterfallCanvas, 0, wfTopY, sW, wfH);
+
+        requestAnimationFrame(renderLabVisuals);
+      }
+
+      updateDspParameters();
+      requestAnimationFrame(renderLabVisuals);
+    })();
+
+
+
+    // Browser-only educational DSP demonstrations using generated test signals.
+    (function initDspModules() {
+      const colors={grid:'rgba(136,146,176,.22)',a:'#94A3B8',b:'#00E5FF',c:'#FB7185',d:'#A78BFA',text:'#8892B0'};
+      function setup(id){const c=document.getElementById(id);if(!c)return null;const r=c.getBoundingClientRect(),d=Math.max(1,devicePixelRatio||1);c.width=Math.max(1,Math.floor(r.width*d));c.height=Math.max(1,Math.floor(r.height*d));const ctx=c.getContext('2d');ctx.setTransform(d,0,0,d,0,0);return{ctx,w:r.width,h:r.height};}
+      function linePlot(id,traces,min=-1,max=1){const o=setup(id);if(!o)return;const{ctx,w,h}=o;ctx.clearRect(0,0,w,h);ctx.strokeStyle=colors.grid;for(let j=1;j<4;j++){ctx.beginPath();ctx.moveTo(0,h*j/4);ctx.lineTo(w,h*j/4);ctx.stroke();}traces.forEach(t=>{ctx.beginPath();ctx.strokeStyle=t.color;ctx.lineWidth=1.6;t.data.forEach((v,i)=>{const x=i/(t.data.length-1)*w,y=h-(v-min)/(max-min)*h;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();});}
+      function adaptiveSignals(kind,mu){const N=900,L=32,x=[],d=[],path=kind==='aec'?[.72,.42,-.18,.10,.05]:[.9,-.35,.2,.08],w=Array(L).fill(0),ref=Array(L).fill(0),before=[],after=[];for(let n=0;n<N;n++){x[n]=Math.sin(2*Math.PI*n/53)+.45*Math.sin(2*Math.PI*n/29)+.18*Math.sin(2*Math.PI*n/13);let echo=0;for(let k=0;k<path.length;k++)if(n-k>=0)echo+=path[k]*x[n-k];const wanted=.22*Math.sin(2*Math.PI*n/(kind==='aec'?101:97));d[n]=wanted+echo+.025*Math.sin(n*2.399)+.01*Math.sin(n*5.13);}for(let n=0;n<N;n++){ref.unshift(x[n]);ref.length=L;let y=0,norm=1e-5;for(let k=0;k<L;k++){y+=w[k]*ref[k];norm+=ref[k]*ref[k];}const e=d[n]-y;before.push(d[n]);after.push(e);for(let k=0;k<L;k++)w[k]+=mu*e*ref[k]/norm;}return{before,after};}
+      function runAdaptive(kind){const mu=+document.getElementById(kind+'Mu').value,r=adaptiveSignals(kind,mu);linePlot(kind+'Canvas',[{data:r.before,color:colors.a},{data:r.after,color:colors.b}]);document.getElementById(kind+'Status').textContent='Completed — grey: microphone mixture; cyan: adaptive-filter residual. Generated signals only.';}
+      ['aec','aic'].forEach(k=>{const slider=document.getElementById(k+'Mu');slider.addEventListener('input',()=>document.getElementById(k+'MuVal').textContent=(+slider.value).toFixed(2));document.getElementById(k+'Run').addEventListener('click',()=>runAdaptive(k));runAdaptive(k);});
+      const eqFreq=document.getElementById('eqFreq'),eqGain=document.getElementById('eqGain'),eqQ=document.getElementById('eqQ');
+      function peakingDb(f,fc,gain,q){const A=10**(gain/40),w=2*Math.PI*f/48000,w0=2*Math.PI*fc/48000,al=Math.sin(w0)/(2*q),c=Math.cos(w0),b0=1+al*A,b1=-2*c,b2=1-al*A,a0=1+al/A,a1=-2*c,a2=1-al/A,wr=2*Math.PI*f/48000,cr=Math.cos(wr),sr=Math.sin(wr),c2=Math.cos(2*wr),s2=Math.sin(2*wr),nr=Math.hypot(b0+b1*cr+b2*c2,-b1*sr-b2*s2),dr=Math.hypot(a0+a1*cr+a2*c2,-a1*sr-a2*s2);return 20*Math.log10(Math.max(1e-8,nr/dr));}
+      function drawEq(){const fc=+eqFreq.value,g=+eqGain.value,q=+eqQ.value;document.getElementById('eqFreqVal').textContent=fc+' Hz';document.getElementById('eqGainVal').textContent=(g>0?'+':'')+g+' dB';document.getElementById('eqQVal').textContent=q.toFixed(1);const o=setup('eqCanvas');if(!o)return;const{ctx,w,h}=o;ctx.clearRect(0,0,w,h);ctx.strokeStyle=colors.grid;for(let j=1;j<4;j++){ctx.beginPath();ctx.moveTo(0,h*j/4);ctx.lineTo(w,h*j/4);ctx.stroke();}ctx.beginPath();for(let i=0;i<220;i++){const f=20*1000**(i/219),db=peakingDb(f,fc,g,q),x=i/219*w,y=h/2-db/30*h/2;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.strokeStyle=colors.b;ctx.lineWidth=2;ctx.stroke();ctx.fillStyle=colors.text;ctx.font='10px monospace';ctx.fillText('+15 dB',4,12);ctx.fillText('0 dB',4,h/2-4);ctx.fillText('-15 dB',4,h-4);ctx.fillText('20 Hz',4,h-14);ctx.fillText('20 kHz',w-48,h-14);}
+      [eqFreq,eqGain,eqQ].forEach(el=>el.addEventListener('input',drawEq));
+      document.getElementById('eqAdaptBtn').addEventListener('click',()=>{let low=0,high=0;for(let n=0;n<512;n++){const l=Math.sin(2*Math.PI*4*n/512),h=.55*Math.sin(2*Math.PI*71*n/512);low+=l*l;high+=h*h;}low=Math.sqrt(low/512);high=Math.sqrt(high/512);const g=Math.max(-6,Math.min(6,(high-low)*12));eqFreq.value=low>high?500:3500;eqGain.value=g.toFixed(1);eqQ.value='1.2';drawEq();document.getElementById('eqAdaptStatus').textContent='Generated test signal analyzed — selected '+eqFreq.value+' Hz and '+Number(eqGain.value).toFixed(1)+' dB illustrative gain.';});drawEq();
+      const bandNames=['Low','Mid','High'],bandColors=[colors.b,colors.c,colors.d];
+      function drawMb(){const o=setup('mbCanvas');if(!o)return;const{ctx,w,h}=o;ctx.clearRect(0,0,w,h);ctx.strokeStyle=colors.grid;for(let j=1;j<4;j++){ctx.beginPath();ctx.moveTo(0,h*j/4);ctx.lineTo(w,h*j/4);ctx.stroke();}ctx.beginPath();ctx.moveTo(0,h);ctx.lineTo(w,0);ctx.strokeStyle='rgba(148,163,184,.5)';ctx.stroke();bandNames.forEach((name,i)=>{const t=+document.getElementById('mb'+name+'T').value,r=+document.getElementById('mb'+name+'R').value;document.getElementById('mb'+name+'TVal').textContent=t+' dB';document.getElementById('mb'+name+'RVal').textContent=r.toFixed(1).replace('.0','')+':1';ctx.beginPath();for(let n=0;n<=200;n++){const input=-60+n*.3,out=input<=t?input:t+(input-t)/r,x=(input+60)/60*w,y=h-(out+60)/60*h;n?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.strokeStyle=bandColors[i];ctx.lineWidth=2;ctx.stroke();});ctx.fillStyle=colors.text;ctx.font='10px monospace';ctx.fillText('OUTPUT LEVEL (dB)',5,12);ctx.fillText('INPUT LEVEL (dB)',w-115,h-7);}
+      bandNames.forEach(n=>['T','R'].forEach(k=>document.getElementById('mb'+n+k).addEventListener('input',drawMb)));drawMb();
+      window.addEventListener('resize',()=>{runAdaptive('aec');runAdaptive('aic');drawEq();drawMb();});
+    })();
+
+  </script>
+</body>
+</html>
