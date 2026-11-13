@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Spatial source separation lab | Basamad</title><meta name="description" content="Separate several simultaneous talkers by direction with a microphone array."><link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="nav"><div class="wrap"><a class="brand" href="index.html"><span class="logo"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#00E5FF" stroke-width="2" stroke-linecap="round"><path d="M3 11v2M7 8v8M11 4v16M15 7v10M19 9v6"/></svg></span>BASAMAD<small>Audio DSP</small></a><nav><a class="l" href="index.html"><i>01</i>Home</a><a class="l" href="gsc.html"><i>02</i>GSC beamforming</a><a class="l" href="aec.html"><i>03</i>Echo cancellation</a><a class="l" href="separation.html" aria-current="page"><i>04</i>Source separation</a><a class="l" href="index.html#contact"><i>05</i>Contact</a></nav></div></header>
+<main class="wrap"><section style="margin-top:52px">
+<h1>Separating talkers by direction</h1><p class="lead">Several people speak at once. Pick a talker and hear what the array recovers when it steers toward that direction.</p><div class="chain" id="chain"></div>
+<div class="lab"><div class="stage"><canvas id="spec" aria-label="Spectrogram of the playing audio, 0 to 8 kHz"></canvas>
+<div class="bar"><i id="pos"></i></div>
+<div class="row2"><button id="play">Play</button><span class="small" id="note">Press Play, then change any setting while the audio runs.</span></div>
+<div id="controls"></div></div>
+<aside class="side"><div><h3>Geometry</h3><svg id="polar" viewBox="0 0 220 220" role="img" aria-label="Source positions around the array"></svg></div>
+<h3 style="margin-top:18px">Measured for this setting</h3><div id="metrics"></div></aside></div></section>
+<section class="cols"><div><h2>What to listen for</h2><ul><li>Mix versus separated output: the other talkers should sink well below the selected one.</li><li>Talkers closer in angle are harder to separate. Compare the 2-talker and 4-talker scenes.</li><li>Steering to different talkers: the quality can differ with each position.</li><li>The removed signal shows what was suppressed to get the selected talker.</li></ul></div><div><h2>How the audio was made</h2><p>Each scene mixes separately recorded talkers rendered at fixed angles in a simulated room. The talkers are known individually, so separation is scored against the clean source.</p><!-- EDIT: add array, RT60, talker angles and the algorithms behind each option. --><p class="small">Save files as audio/separation/&lt;talkers&gt;_&lt;method&gt;_&lt;talker&gt;_&lt;listen&gt;.wav. The unprocessed mix ignores the talker choice, so use x in its place.</p></div></section></main>
+<footer><div class="wrap">Basamad, independent audio DSP engineering. Audio examples are rendered offline; no source code or binaries are published on this site.</div></footer><script>window.LAB={dir:'separation',ext:'wav',target:'steer',chain:['Microphone array','Direction estimation','Per-talker spatial filters','Interference cancellation','Selected talker'],
+controls:[
+{id:'scene',label:'Number of talkers',options:[
+{v:'2',l:'2 talkers',src:[{a:-30,l:'A'},{a:40,l:'B'}]},
+{v:'3',l:'3 talkers',src:[{a:-50,l:'A'},{a:0,l:'B'},{a:55,l:'C'}]},
+{v:'4',l:'4 talkers',src:[{a:-60,l:'A'},{a:-20,l:'B'},{a:25,l:'C'},{a:65,l:'D'}]}]},
+{id:'proc',label:'Processing',options:[{v:'mix',l:'Microphone 1, unprocessed',n:1.5,ig:['steer']},{v:'dsb',l:'Delay-and-sum steered',n:.9},{v:'sep',l:'Adaptive spatial separation',n:.2}]},
+{id:'steer',label:'Selected talker',options:[{v:'A',l:'A'},{v:'B',l:'B'},{v:'C',l:'C',sc:['3','4']},{v:'D',l:'D',sc:['4']}]},
+{id:'listen',label:'Listen to',options:[{v:'out',l:'Output'},{v:'res',l:'Removed signal'}]}]}</script><script src="assets/lab.js"></script></body></html>

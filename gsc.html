@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GSC beamformer lab | Basamad</title><meta name="description" content="Listen to a low-latency generalized sidelobe canceller at different frame shifts."><link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="nav"><div class="wrap"><a class="brand" href="index.html"><span class="logo"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#00E5FF" stroke-width="2" stroke-linecap="round"><path d="M3 11v2M7 8v8M11 4v16M15 7v10M19 9v6"/></svg></span>BASAMAD<small>Audio DSP</small></a><nav><a class="l" href="index.html"><i>01</i>Home</a><a class="l" href="gsc.html" aria-current="page"><i>02</i>GSC beamforming</a><a class="l" href="aec.html"><i>03</i>Echo cancellation</a><a class="l" href="separation.html"><i>04</i>Source separation</a><a class="l" href="index.html#contact"><i>05</i>Contact</a></nav></div></header>
+<main class="wrap"><section style="margin-top:52px">
+<h1>Low-latency GSC beamforming</h1><p class="lead">Switch between raw microphone, delay-and-sum and GSC output while the audio keeps playing. Then shorten the frame shift to see what latency costs and what it keeps.</p><div class="chain" id="chain"></div>
+<div class="lab"><div class="stage"><canvas id="spec" aria-label="Spectrogram of the playing audio, 0 to 8 kHz"></canvas>
+<div class="bar"><i id="pos"></i></div>
+<div class="row2"><button id="play">Play</button><span class="small" id="note">Press Play, then change any setting while the audio runs.</span></div>
+<div id="controls"></div></div>
+<aside class="side"><div><h3>Geometry</h3><svg id="polar" viewBox="0 0 220 220" role="img" aria-label="Source positions around the array"></svg></div>
+<h3 style="margin-top:18px">Measured for this setting</h3><div id="metrics"></div></aside></div></section>
+<section class="cols"><div><h2>What to listen for</h2><ul><li>Raw versus GSC: how far the interferer drops while the target stays intact.</li><li>Frame shift from 64 down to 8 samples: the output delay shrinks. Listen for changes in noise reduction and artifacts.</li><li>The removed signal: it should contain the interferer and almost none of the target. Target leakage shows up here first.</li><li>The moving interferer: how quickly the adaptive stage re-converges.</li></ul></div><div><h2>How the audio was made</h2><p>Renders come from simulated rooms with a known array geometry, reverberation time and source layout, processed offline. Each file is time-aligned, loudness-matched and looped, so switching settings never restarts playback.</p><!-- EDIT: add your array (mics, spacing), RT60, sample rate and SNR here. --><p class="small">Replace the placeholder signals by saving files as audio/gsc/&lt;scenario&gt;_&lt;processing&gt;_&lt;frameshift&gt;_&lt;listen&gt;.wav. The raw and delay-and-sum options ignore frame shift, so use x in its place, for example static_raw_x_out.wav.</p></div></section></main>
+<footer><div class="wrap">Basamad, independent audio DSP engineering. Audio examples are rendered offline; no source code or binaries are published on this site.</div></footer><script>window.LAB={dir:'gsc',ext:'wav',target:null,chain:['Microphone array','Fixed beamformer','Blocking matrix','Adaptive interference canceller','Output'],
+controls:[
+{id:'scene',label:'Scenario',options:[
+{v:'static',l:'Talker and fixed interferer',src:[{a:0,t:1,l:'Target'},{a:60,l:'Interferer'}]},
+{v:'moving',l:'Moving interferer',src:[{a:0,t:1,l:'Target'},{a:-40,l:'Interferer'}]},
+{v:'diffuse',l:'Diffuse noise',src:[{a:0,t:1,l:'Target'}]}]},
+{id:'proc',label:'Processing',options:[{v:'raw',l:'Microphone 1, unprocessed',n:1.6,ig:['fs']},{v:'dsb',l:'Delay-and-sum',n:1,ig:['fs']},{v:'gsc',l:'GSC',n:.2}]},
+{id:'fs',label:'Frame shift (samples at 48 kHz)',options:[{v:'64',l:'64'},{v:'32',l:'32'},{v:'16',l:'16'},{v:'8',l:'8'}]},
+{id:'listen',label:'Listen to',options:[{v:'out',l:'Output'},{v:'res',l:'Removed signal'}]}]}</script><script src="assets/lab.js"></script></body></html>
